@@ -77,23 +77,23 @@ function buildAnimals() {
     barryBoss:  {id:'barryBoss', name:'Barry Bearcub',    hp:12, black:[7],    white:[9,11], accessFrom:['r7a','r11a'], unlockFrom:'f10a',gemFirst:5,gemSub:3,lifeLoss:0,isBoss:true, isArmored:false},
   };
   const nodes = {
-    startL:{x:60,y:200}, startR:{x:60,y:400},
-    f2a:{x:155,y:105},   r2a:{x:160,y:195},
-    r3a:{x:258,y:115},   f4a:{x:155,y:325},
-    r4a:{x:160,y:405},   r5a:{x:262,y:218},
-    r6a:{x:258,y:375},   f6a:{x:362,y:295},
-    r7a:{x:358,y:178},   r8a:{x:362,y:395},
-    f8a:{x:458,y:348},   r9a:{x:458,y:178},
-    r10a:{x:462,y:408},  r11a:{x:558,y:178},
-    f10a:{x:558,y:295},  r12a:{x:558,y:388},
-    f12a:{x:648,y:242},  gold1a:{x:278,y:158},
-    gold2a:{x:162,y:455},gem1a:{x:540,y:118},
-    gem2a:{x:678,y:312}, chest1a:{x:592,y:455},
+    startL: {x:90,  y:145}, startR: {x:90,  y:385},
+    f2a:    {x:185, y:65},  r2a:    {x:185, y:178},
+    r3a:    {x:280, y:215}, f4a:    {x:200, y:320},
+    r4a:    {x:185, y:390}, r5a:    {x:360, y:235},
+    r6a:    {x:280, y:360}, gold1a: {x:355, y:155},
+    gold2a: {x:275, y:450}, f6a:    {x:445, y:295},
+    r7a:    {x:445, y:175}, r8a:    {x:445, y:385},
+    r9a:    {x:535, y:120}, gem1a:  {x:535, y:50},
+    f8a:    {x:535, y:280}, r10a:   {x:535, y:420},
+    chest1a:{x:625, y:455}, r11a:   {x:625, y:120},
+    f10a:   {x:625, y:250}, r12a:   {x:625, y:390},
+    f12a:   {x:715, y:285}, gem2a:  {x:715, y:390},
   };
   const mNodes = {
-    greyWolf:{x:205,y:55},   buffHound:{x:432,y:460},
-    primalHare:{x:318,y:58}, savageBoar:{x:642,y:432},
-    primalWolf:{x:80,y:462}, barryBoss:{x:678,y:178},
+    greyWolf:   {x:185, y:25},  primalHare: {x:280, y:150},
+    primalWolf: {x:175, y:455}, buffHound:  {x:490, y:468},
+    savageBoar: {x:590, y:45},  barryBoss:  {x:735, y:148},
   };
   return {
     key:'animals', name:'Annoyed Animals', difficulty:'Novice', color:'#7a9b5c',
@@ -1172,7 +1172,7 @@ function renderSVGMap() {
   ) : [];
   const clickable = new Set([...validSpaces, ...torchSpaces]);
 
-  const W = 780, H = 500;
+  const W = 780, H = 510;
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="dungeon-map">`;
 
   // Draw edges
