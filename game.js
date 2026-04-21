@@ -23,44 +23,80 @@ function pairSplits(w) {
 
 function buildAnimals() {
   const spaces = {
-    startL:  {id:'startL',  num:null,type:'start',   label:'S'},
-    startR:  {id:'startR',  num:null,type:'start',   label:'S'},
-    f2a:     {id:'f2a',     num:2,   type:'fist',    label:'2'},
-    r2a:     {id:'r2a',     num:2,   type:'regular', label:'2'},
-    r3a:     {id:'r3a',     num:3,   type:'regular', label:'3'},
-    f4a:     {id:'f4a',     num:4,   type:'fist',    label:'4'},
-    r4a:     {id:'r4a',     num:4,   type:'regular', label:'4'},
-    r5a:     {id:'r5a',     num:5,   type:'regular', label:'5'},
-    r6a:     {id:'r6a',     num:6,   type:'regular', label:'6'},
-    f6a:     {id:'f6a',     num:6,   type:'fist',    label:'6'},
-    r7a:     {id:'r7a',     num:7,   type:'regular', label:'7'},
-    r8a:     {id:'r8a',     num:8,   type:'regular', label:'8'},
-    f8a:     {id:'f8a',     num:8,   type:'fist',    label:'8'},
-    r9a:     {id:'r9a',     num:9,   type:'regular', label:'9'},
-    r10a:    {id:'r10a',    num:10,  type:'regular', label:'10'},
-    r11a:    {id:'r11a',    num:11,  type:'regular', label:'11'},
-    f10a:    {id:'f10a',    num:10,  type:'fist',    label:'10'},
-    r12a:    {id:'r12a',    num:12,  type:'regular', label:'12'},
-    f12a:    {id:'f12a',    num:12,  type:'fist',    label:'12'},
-    gold1a:  {id:'gold1a',  num:5,   type:'gold',    label:'5'},
-    gold2a:  {id:'gold2a',  num:6,   type:'gold',    label:'6'},
-    gem1a:   {id:'gem1a',   num:9,   type:'gem',     label:'9'},
-    gem2a:   {id:'gem2a',   num:12,  type:'gem',     label:'12'},
-    chest1a: {id:'chest1a', num:10,  type:'treasure',label:'10'},
+    // Left cluster: always reachable on matching roll, no adjacency needed
+    sl2:  {id:'sl2',  num:2,  type:'start', label:'2'},
+    sl3:  {id:'sl3',  num:3,  type:'start', label:'3'},
+    sl6:  {id:'sl6',  num:6,  type:'start', label:'6'},
+    sl7:  {id:'sl7',  num:7,  type:'start', label:'7'},
+    sl9:  {id:'sl9',  num:9,  type:'start', label:'9'},
+    sl12: {id:'sl12', num:12, type:'start', label:'12'},
+    // Right cluster
+    sr4:  {id:'sr4',  num:4,  type:'start', label:'4'},
+    sr5:  {id:'sr5',  num:5,  type:'start', label:'5'},
+    sr8:  {id:'sr8',  num:8,  type:'start', label:'8'},
+    sr10: {id:'sr10', num:10, type:'start', label:'10'},
+    sr11: {id:'sr11', num:11, type:'start', label:'11'},
+    // Fist spaces
+    f2a:  {id:'f2a',  num:2,  type:'fist', label:'2'},
+    f4a:  {id:'f4a',  num:4,  type:'fist', label:'4'},
+    f6a:  {id:'f6a',  num:6,  type:'fist', label:'6'},
+    f8a:  {id:'f8a',  num:8,  type:'fist', label:'8'},
+    f10a: {id:'f10a', num:10, type:'fist', label:'10'},
+    f12a: {id:'f12a', num:12, type:'fist', label:'12'},
+    // Regular spaces
+    r2a:  {id:'r2a',  num:2,  type:'regular', label:'2'},
+    r3a:  {id:'r3a',  num:3,  type:'regular', label:'3'},
+    r4a:  {id:'r4a',  num:4,  type:'regular', label:'4'},
+    r5a:  {id:'r5a',  num:5,  type:'regular', label:'5'},
+    r6a:  {id:'r6a',  num:6,  type:'regular', label:'6'},
+    r7a:  {id:'r7a',  num:7,  type:'regular', label:'7'},
+    r8a:  {id:'r8a',  num:8,  type:'regular', label:'8'},
+    r9a:  {id:'r9a',  num:9,  type:'regular', label:'9'},
+    r10a: {id:'r10a', num:10, type:'regular', label:'10'},
+    r11a: {id:'r11a', num:11, type:'regular', label:'11'},
+    r12a: {id:'r12a', num:12, type:'regular', label:'12'},
+    // Special spaces
+    gold1a:  {id:'gold1a',  num:5,  type:'gold',    label:'5'},
+    gold2a:  {id:'gold2a',  num:6,  type:'gold',    label:'6'},
+    gem1a:   {id:'gem1a',   num:9,  type:'gem',     label:'9'},
+    gem2a:   {id:'gem2a',   num:12, type:'gem',     label:'12'},
+    chest1a: {id:'chest1a', num:10, type:'treasure', label:'10'},
   };
   buildAdj(spaces, [
-    ['startL','r2a'],['startL','r7a'],['startL','r9a'],
-    ['startR','r4a'],['startR','r6a'],['startR','r8a'],
-    ['f2a','startL'],['f2a','r2a'],['f2a','r3a'],
+    // Left cluster internal
+    ['sl9','sl7'], ['sl9','sl12'],
+    ['sl7','sl2'], ['sl7','sl6'],
+    ['sl12','sl2'],['sl12','sl6'],
+    ['sl2','sl3'], ['sl6','sl3'],
+    // Right cluster internal
+    ['sr4','sr5'], ['sr4','sr8'],
+    ['sr5','sr10'],
+    ['sr8','sr11'],['sr8','sr10'],
+    ['sr11','sr10'],
+    // Left cluster → regular spaces
+    ['sl2','r2a'], ['sl2','f2a'],
+    ['sl3','r3a'],
+    ['sl6','r6a'],
+    ['sl7','r7a'],
+    ['sl9','r9a'], ['sl9','gem1a'],
+    ['sl12','r12a'],
+    // Right cluster → regular spaces
+    ['sr4','r4a'], ['sr4','f4a'],
+    ['sr5','r5a'], ['sr5','gold1a'],
+    ['sr8','r8a'], ['sr8','f8a'],
+    ['sr10','r10a'],['sr10','chest1a'],
+    ['sr11','r11a'],
+    // Regular/fist internal adjacency
+    ['f2a','r2a'], ['f2a','r3a'],
     ['r2a','r3a'],
-    ['r3a','r5a'],['r3a','r7a'],
-    ['f4a','startR'],['f4a','r4a'],['f4a','r5a'],
+    ['r3a','r5a'], ['r3a','r7a'],
+    ['f4a','r4a'], ['f4a','r5a'],
     ['r4a','r6a'],
-    ['r5a','f6a'],['r5a','r7a'],['r5a','gold1a'],
-    ['r6a','f6a'],['r6a','r10a'],['r6a','gold2a'],
-    ['f6a','r7a'],['f6a','r8a'],
-    ['r8a','f8a'],['r8a','r10a'],
-    ['f8a','r9a'],['f8a','r10a'],['f8a','r12a'],
+    ['r5a','f6a'], ['r5a','r7a'], ['r5a','gold1a'],
+    ['r6a','f6a'], ['r6a','r10a'],['r6a','gold2a'],
+    ['f6a','r7a'], ['f6a','r8a'],
+    ['r8a','f8a'], ['r8a','r10a'],
+    ['f8a','r9a'], ['f8a','r10a'],['f8a','r12a'],
     ['r9a','r11a'],['r9a','gem1a'],
     ['r10a','r12a'],['r10a','chest1a'],
     ['r11a','f10a'],['r11a','r12a'],
@@ -69,37 +105,44 @@ function buildAnimals() {
     ['f12a','gem2a'],
   ]);
   const monsters = {
-    greyWolf:   {id:'greyWolf',  name:'Grey Wolf',       hp:3,  black:[2],    white:[10],   accessFrom:['r2a'],        unlockFrom:'r10a',gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    buffHound:  {id:'buffHound', name:'Buff Hound',       hp:4,  black:[8,10], white:[],     accessFrom:['r8a','r10a'], unlockFrom:null,  gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    primalHare: {id:'primalHare',name:'Primal Hare',      hp:3,  black:[3],    white:[11],   accessFrom:['r3a'],        unlockFrom:'r11a',gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    savageBoar: {id:'savageBoar',name:'Savage Boar',      hp:5,  black:[9,11], white:[],     accessFrom:['r9a','r11a'], unlockFrom:null,  gemFirst:2,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    primalWolf: {id:'primalWolf',name:'Primal Wolf',      hp:4,  black:[4],    white:[6],    accessFrom:['r4a'],        unlockFrom:'r6a', gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    barryBoss:  {id:'barryBoss', name:'Barry Bearcub',    hp:12, black:[7],    white:[9,11], accessFrom:['r7a','r11a'], unlockFrom:'f10a',gemFirst:5,gemSub:3,lifeLoss:0,isBoss:true, isArmored:false},
+    greyWolf:   {id:'greyWolf',  name:'Grey Wolf',    hp:3,  black:[2],    white:[10],   accessFrom:['r2a'],        unlockFrom:'r10a', gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
+    buffHound:  {id:'buffHound', name:'Buff Hound',    hp:4,  black:[8,10], white:[],     accessFrom:['r8a','r10a'], unlockFrom:null,   gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
+    primalHare: {id:'primalHare',name:'Primal Hare',   hp:3,  black:[3],    white:[11],   accessFrom:['r3a'],        unlockFrom:'r11a', gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
+    savageBoar: {id:'savageBoar',name:'Savage Boar',   hp:5,  black:[9,11], white:[],     accessFrom:['r9a','r11a'], unlockFrom:null,   gemFirst:2,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
+    primalWolf: {id:'primalWolf',name:'Primal Wolf',   hp:4,  black:[4],    white:[6],    accessFrom:['r4a'],        unlockFrom:'r6a',  gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
+    barryBoss:  {id:'barryBoss', name:'Barry Bearcub', hp:12, black:[7],    white:[9,11], accessFrom:['r7a','r11a'], unlockFrom:'f10a', gemFirst:5,gemSub:3,lifeLoss:0,isBoss:true, isArmored:false},
   };
   const nodes = {
-    startL: {x:90,  y:145}, startR: {x:90,  y:385},
-    f2a:    {x:185, y:65},  r2a:    {x:185, y:178},
-    r3a:    {x:280, y:215}, f4a:    {x:200, y:320},
-    r4a:    {x:185, y:390}, r5a:    {x:360, y:235},
-    r6a:    {x:280, y:360}, gold1a: {x:355, y:155},
-    gold2a: {x:275, y:450}, f6a:    {x:445, y:295},
-    r7a:    {x:445, y:175}, r8a:    {x:445, y:385},
-    r9a:    {x:535, y:120}, gem1a:  {x:535, y:50},
-    f8a:    {x:535, y:280}, r10a:   {x:535, y:420},
-    chest1a:{x:625, y:455}, r11a:   {x:625, y:120},
-    f10a:   {x:625, y:250}, r12a:   {x:625, y:390},
-    f12a:   {x:715, y:285}, gem2a:  {x:715, y:390},
+    sl9:  {x:68, y:88},   sl7:  {x:153,y:88},
+    sl12: {x:68, y:173},  sl2:  {x:153,y:173},
+    sl6:  {x:68, y:258},  sl3:  {x:153,y:258},
+    sr4:  {x:628,y:88},   sr5:  {x:713,y:88},
+    sr8:  {x:628,y:173},  sr10: {x:713,y:173},
+    sr11: {x:628,y:258},
+    f2a:  {x:238,y:45},   r2a:  {x:238,y:120},
+    r3a:  {x:323,y:80},   r7a:  {x:323,y:163},
+    gem1a:{x:238,y:265},  r9a:  {x:323,y:253},
+    r4a:  {x:238,y:358},  f4a:  {x:238,y:448},
+    r5a:  {x:408,y:120},  gold1a:{x:408,y:43},
+    f6a:  {x:408,y:218},  r6a:  {x:323,y:338},
+    gold2a:{x:238,y:428}, r8a:  {x:493,y:218},
+    r11a: {x:493,y:88},   f8a:  {x:493,y:323},
+    f10a: {x:493,y:133},  r10a: {x:578,y:323},
+    r12a: {x:578,y:418},  f12a: {x:663,y:418},
+    gem2a:{x:663,y:488},  chest1a:{x:493,y:453},
   };
   const mNodes = {
-    greyWolf:   {x:185, y:25},  primalHare: {x:280, y:150},
-    primalWolf: {x:175, y:455}, buffHound:  {x:490, y:468},
-    savageBoar: {x:590, y:45},  barryBoss:  {x:735, y:148},
+    greyWolf:   {x:238,y:18},  primalHare: {x:323,y:28},
+    primalWolf: {x:68, y:338}, buffHound:  {x:578,y:460},
+    savageBoar: {x:493,y:38},  barryBoss:  {x:748,y:173},
   };
   return {
     key:'animals', name:'Annoyed Animals', difficulty:'Novice', color:'#7a9b5c',
-    starts:['startL','startR'], spaces, monsters, nodes, mNodes,
+    leftStarts:  ['sl2','sl3','sl6','sl7','sl9','sl12'],
+    rightStarts: ['sr4','sr5','sr8','sr10','sr11'],
+    spaces, monsters, nodes, mNodes,
     achievements:{
-      startsLinked:{label:'Connect both Starts via visited path',done:false,gemFirst:1,gemSub:0,type:'path'},
+      startsLinked:{label:'Connect both clusters via visited path',done:false,gemFirst:1,gemSub:0,type:'path'},
       fist5of6:{label:'5 of 6 Fist spaces',count:0,threshold:5,total:6,done:false,gemFirst:3,gemSub:1,type:'count'},
     },
   };
@@ -421,7 +464,7 @@ function initGame(advKey) {
     life: 10, maxLife: 10, extraLife: 0,
     blackDieUses: 3,
     gems: 0, gold: 0, torches: 0,
-    visitedSpaces: new Set(adv.starts),
+    visitedSpaces: new Set(Object.keys(adv.spaces).filter(id => adv.spaces[id].type === 'start' && adv.spaces[id].num === null)),
     rubbleProgress: {},
     cloudAssignments: {},
     cloudSetupSelected: null,
@@ -477,10 +520,12 @@ function canVisitSpace(spaceId, pair) {
   const sp = getAdv().spaces[spaceId];
   if (sp.type === 'gateway') return false;
   const num = spaceNum(spaceId);
-  if (num === null && sp.type !== 'start') return false;
-  if (sp.type !== 'start' && num !== pair.total) return false;
+  // Numbered start spaces: always visitable with matching roll, no adjacency required
+  if (sp.type === 'start') return num !== null && num === pair.total;
+  if (num === null) return false;
+  if (num !== pair.total) return false;
   if (sp.type === 'fist' && pair.dice[0] !== pair.dice[1]) return false;
-  if (sp.type !== 'start' && !hasAdjacentVisited(spaceId)) return false;
+  if (!hasAdjacentVisited(spaceId)) return false;
   return true;
 }
 
@@ -853,21 +898,24 @@ function checkStartsConnected() {
   const adv = getAdv();
   const as = state.achievementState['startsLinked'];
   if (!as || as.done) return;
-  // BFS from startL to startR through visited spaces
-  if (!isVisited('startL') || !isVisited('startR')) return;
-  const visited = new Set(['startL']);
-  const queue = ['startL'];
+  const left  = adv.leftStarts  || ['startL'];
+  const right = adv.rightStarts || ['startR'];
+  const rightSet = new Set(right);
+  const sources = left.filter(id => isVisited(id));
+  if (sources.length === 0) return;
+  const seen = new Set(sources);
+  const queue = [...sources];
   while (queue.length) {
     const curr = queue.shift();
-    if (curr === 'startR') {
+    if (rightSet.has(curr) && isVisited(curr)) {
       as.done = true;
       state.gems += adv.achievements.startsLinked.gemFirst;
       state.message += ' Achievement: Starts connected! +1 gem.';
       return;
     }
     for (const nbr of adv.spaces[curr].adj) {
-      if (!visited.has(nbr) && state.visitedSpaces.has(nbr)) {
-        visited.add(nbr);
+      if (!seen.has(nbr) && state.visitedSpaces.has(nbr)) {
+        seen.add(nbr);
         queue.push(nbr);
       }
     }
