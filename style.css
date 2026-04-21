@@ -462,6 +462,276 @@ body, html {
   color: white;
 }
 
+/* ── Phase Bar ── */
+.phase-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 0.8em;
+  color: #888;
+}
+.phase-step { opacity: 0.45; }
+.phase-step.active { opacity: 1; color: var(--theme-color); font-weight: bold; }
+
+/* ── Dice Section (compact variant) ── */
+.dice-section.compact {
+  padding: 16px 20px;
+}
+
+.dice-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.die.white { border-color: #eee; background: rgba(255,255,255,0.1); }
+.die.black { border-color: #555; background: #1a1a1a; color: #f1c40f; }
+
+/* ── Split Selector ── */
+.split-grid {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.split-option {
+  padding: 10px 18px;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid var(--theme-color);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 1em;
+  transition: all 0.2s;
+}
+.split-option:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
+
+/* ── Confirm / Black Die ── */
+.pairs-display {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.pair-box {
+  padding: 10px 20px;
+  border: 2px solid var(--theme-color);
+  border-radius: 6px;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+.black-die-section {
+  background: rgba(241,196,15,0.1);
+  border: 1px solid #f1c40f;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.black-die-section p { margin-bottom: 8px; font-size: 0.9em; color: #f1c40f; }
+.black-swap-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+.swap-btn {
+  padding: 6px 12px;
+  background: rgba(241,196,15,0.15);
+  border: 1px solid #f1c40f;
+  border-radius: 4px;
+  color: #f1c40f;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+  transition: all 0.2s;
+}
+.swap-btn:hover { background: rgba(241,196,15,0.3); }
+
+/* ── Pair Assign Header ── */
+.pair-assign-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1em;
+  margin-bottom: 8px;
+}
+
+/* ── Monster Panel ── */
+.monster-panel {
+  background: rgba(0,0,0,0.4);
+  border: 2px solid var(--theme-color);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 16px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.monster-panel h4 { margin-bottom: 8px; color: var(--theme-color); }
+.monster-item {
+  padding: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.85em;
+}
+.monster-item:last-child { border-bottom: none; }
+.monster-item.defeated { opacity: 0.4; }
+.monster-item.boss-monster { border: 1px solid #e74c3c; border-radius: 4px; padding: 8px; margin-bottom: 4px; background: rgba(231,76,60,0.05); }
+.monster-name { font-weight: bold; margin-bottom: 3px; }
+.monster-nums { color: #aaa; font-size: 0.85em; margin-bottom: 4px; }
+.attack-btn {
+  margin-top: 5px;
+  padding: 4px 12px;
+  background: rgba(231,76,60,0.8);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+  transition: all 0.2s;
+}
+.attack-btn:hover { background: #e74c3c; }
+
+/* ── Achievement Tracker ── */
+.achievement-tracker {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.82em;
+  margin-bottom: 12px;
+}
+.achievement-tracker h4 { margin-bottom: 6px; color: #aaa; }
+.achievement-row { padding: 3px 0; color: #aaa; }
+.achievement-row.done { color: #2ecc71; }
+
+/* ── SVG Map ── */
+.dungeon-map {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+.map-edge { stroke: #333; stroke-width: 2; }
+.map-edge.visited { stroke: rgba(255,255,255,0.2); }
+
+.space-node { fill: #2a2a2a; stroke: #555; stroke-width: 2; cursor: default; }
+.space-node.start-node   { fill: #1a4a1a; stroke: #27ae60; stroke-width: 3; }
+.space-node.fist-node    { fill: #3a2a0a; stroke: #e67e22; stroke-width: 2; }
+.space-node.gold-node    { fill: #3a3a0a; stroke: #f1c40f; stroke-width: 2; }
+.space-node.gem-node     { fill: #0a2a3a; stroke: #3498db; stroke-width: 2; }
+.space-node.chest-node   { fill: #2a1a3a; stroke: #9b59b6; stroke-width: 2; }
+.space-node.rubble-node  { fill: #2a1a0a; stroke: #795548; stroke-width: 2; }
+.space-node.cloud-node   { fill: #1a2a3a; stroke: #8e9cc0; stroke-width: 2; }
+.space-node.claw-node    { fill: #3a1a1a; stroke: #c0392b; stroke-width: 2; }
+.space-node.worm-node    { fill: #1a2a1a; stroke: #27ae60; stroke-width: 2; }
+
+.space-node.visited      { opacity: 0.5; }
+.space-node.partial      { opacity: 0.8; stroke-dasharray: 4 2; }
+.space-node.available    { stroke: #2ecc71; stroke-width: 3; cursor: pointer;
+                           animation: mapglow 0.9s infinite alternate; }
+@keyframes mapglow {
+  from { filter: drop-shadow(0 0 4px #2ecc71); }
+  to   { filter: drop-shadow(0 0 10px #2ecc71); }
+}
+.space-node.available:hover { fill: rgba(46,204,113,0.3); }
+
+.space-label {
+  text-anchor: middle;
+  font-size: 10px;
+  fill: #eee;
+  pointer-events: none;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+.space-label.available-label { fill: #2ecc71; pointer-events: none; }
+
+.monster-node         { fill: #2a0a0a; stroke: #e74c3c; stroke-width: 2; }
+.monster-node.boss    { fill: #3a0a0a; stroke: #c0392b; stroke-width: 3; }
+.monster-node.accessible { stroke: #e74c3c; stroke-width: 2; fill: #3a0a0a; }
+.monster-node.defeated { fill: #1a1a1a; stroke: #555; opacity: 0.5; }
+.monster-hp-fill      { fill: #e74c3c; }
+.monster-label        { text-anchor: middle; font-size: 8px; fill: #eee; pointer-events: none; font-family: 'Courier New', monospace; }
+.monster-access-line  { stroke: #555; stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.4; }
+.monster-access-line.accessible { stroke: #e74c3c; opacity: 0.7; }
+.monster-access-line.defeated   { stroke: #555; opacity: 0.2; }
+
+/* ── Cloud Setup ── */
+.cloud-setup {
+  background: rgba(0,0,0,0.3);
+  border: 2px solid #8e9cc0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.cloud-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.cloud-space {
+  width: 56px; height: 56px;
+  border: 2px solid #8e9cc0;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1em; font-weight: bold;
+  cursor: pointer; background: #1a2a3a;
+  position: relative; transition: all 0.2s;
+}
+.cloud-space:hover { border-color: #fff; }
+.cloud-space.selected { border-color: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
+.cloud-space.assigned { border-color: #f1c40f; color: #f1c40f; }
+.cloud-clear {
+  position: absolute; top: -6px; right: -6px;
+  background: #e74c3c; border: none; color: white;
+  border-radius: 50%; width: 16px; height: 16px;
+  font-size: 10px; cursor: pointer; line-height: 16px; text-align: center;
+}
+.cloud-pool { margin-bottom: 12px; }
+.cloud-num-btn {
+  margin: 4px;
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid #8e9cc0;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  transition: all 0.2s;
+}
+.cloud-num-btn:hover { background: rgba(255,255,255,0.2); }
+.cloud-num-btn.disabled { opacity: 0.4; pointer-events: none; }
+
+/* ── Treasure Chest Modal ── */
+.chest-modal {
+  background: rgba(155,89,182,0.15);
+  border: 2px solid #9b59b6;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.chest-modal h3 { color: #9b59b6; margin-bottom: 12px; }
+.chest-btn {
+  display: block; width: 100%;
+  margin: 8px 0;
+  padding: 12px 16px;
+  background: rgba(155,89,182,0.2);
+  border: 1px solid #9b59b6;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95em;
+  text-align: left;
+  transition: all 0.2s;
+}
+.chest-btn:hover { background: rgba(155,89,182,0.4); }
+
 /* ── Responsive ── */
 @media (max-width: 700px) {
   .game-grid {

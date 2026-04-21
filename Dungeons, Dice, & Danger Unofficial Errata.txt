@@ -1,0 +1,40 @@
+﻿Dungeons, Dice & Danger
+Unofficial Errata (v. 1.0)
+While there has been no errata officially released from the publisher, people have compared the German (original language) rulebook with the English rulebook and identified a number of mistranslations and unclear rules. This is an attempt to pull those together into a single document. 
+Errata
+Marking Spaces
+English rulebook: Players may only visit Regular spaces adjacent to an already visited space or any Start space.
+
+
+Correct rule: Players may only visit (1) any Start space or (2) a Regular space adjacent to an already visited space.
+Defeating the Boss
+English rulebook: [Does not address what rewards a player gets for defeating the Boss Monster after the Boss Monster has been defeated by another player.]
+
+
+Correct rule: The first player to defeat the Boss Monster gets the gems and loses the life points listed. All other players get 1 gem (3 Victory Points) per 3 damage dealt to the Boss Monster at the end of the game. This includes players who defeat the Boss Monster on future turns. 
+Game End
+English rulebook: The game ends when the first player defeats their last monster.
+
+
+Correct rule: The game ends when every monster has been defeated by at least one player.
+Defiant Dinosaurs: Armored Dinosaurs
+English rulebook: To deal Damage to an Armored Dinosaur, a player must use both dice pairs, meaning that the player either deals 2 Damage or 0 Damage. This means that a player cannot deal Damage to an Armored Dinosaur if another player defeats it first.
+
+
+Correct rule: To deal Damage to an Armored Dinosaur, a player must use both dice pairs, meaning that the player either deals 2 Damage or 0 Damage. This means that a player does not deal 1 Damage to an Armored Dinosaur if another player defeats it first.
+Clarifications
+Defeating the Boss
+English rulebook: Players who have not defeated their boss Monster by the time the game ends gain 3 Victory points for every 3 damage they have dealt it.
+
+
+Clarification: 3 points for every 3 damage is the equivalent of 1 gem for every 3 damage, so it is recommended to cross off gems to represent these points.
+Solo Damage
+English rulebook: The player loses 1 Life point if they do not deal at least 1 Damage to a Monster during each round – even if they use both dice pairs elsewhere. Important: The Solo player may forfeit the 2nd dice pair during a round without losing a Life point as long as they deal Damage to a Monster. Use this option wisely.
+
+
+Clarification: [Currently no clarification on whether or not the Solo player takes 1 or 2 damage on a turn in which they do not hit a monster and do not use their second pair of dice. Official sources have provided contradictory guidance.]
+Solo Game End
+English rulebook: However, the Solo player still dies after crossing out the Skull symbol at the bottom of the life tracker.
+
+
+Clarification: Crossing out the Skull symbol does not mean the Solo player loses, only that the game is over.
