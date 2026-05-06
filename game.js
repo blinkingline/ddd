@@ -770,9 +770,11 @@ function renderPhaseUI() {
       </div>
       <p style="margin:8px 0;color:#aaa">Choose how to pair your white dice:</p>
       <div class="split-grid">
-        ${splits.map((s, i) =>
-          `<button class="split-option" data-split="${i}">[${s.d1.join('+')}] = ${s.t1} &amp; [${s.d2.join('+')}] = ${s.t2}</button>`
-        ).join('')}
+        ${splits.map((s, i) => {
+          const d1Badge = s.d1[0] === s.d1[1] ? ' <span class="doubles-badge">✊×2</span>' : '';
+          const d2Badge = s.d2[0] === s.d2[1] ? ' <span class="doubles-badge">✊×2</span>' : '';
+          return `<button class="split-option" data-split="${i}">[${s.d1.join('+')}]=${s.t1}${d1Badge} &amp; [${s.d2.join('+')}]=${s.t2}${d2Badge}</button>`;
+        }).join('')}
       </div>
     </div>`;
   }
@@ -802,11 +804,22 @@ function renderPhaseUI() {
   }
 
   if (state.phase === 'assignPair') {
+    const adv = getAdv();
     const pIdx = state.currentPair;
-    const pair = state.pairs[pIdx];
-    const otherPair = state.pairs[pIdx === 0 ? 1 : 0];
-    const otherDone = otherPair.used || otherPair.forfeited;
 
+    // Build tab-style pair selector showing both pairs
+    const pairTabs = state.pairs.map((p, i) => {
+      const done = p.used || p.forfeited;
+      const active = i === pIdx;
+      const label = done
+        ? `Pair ${i+1}: ${p.total} ✓`
+        : `Pair ${i+1}: [${p.dice.join('+')}]=${p.total}`;
+      return done
+        ? `<span class="pair-tab done">${label}</span>`
+        : `<button class="pair-tab${active ? ' active' : ''}" data-switchpair="${i}">${label}</button>`;
+    }).join('');
+
+    const pair = state.pairs[pIdx];
     const validSpaces = getValidSpaces(pair);
     const attackable = getAttackableMonsters(pair);
 
@@ -815,7 +828,7 @@ function renderPhaseUI() {
     ).join('');
 
     const monsterButtons = attackable.map(mid => {
-      const m = getAdv().monsters[mid];
+      const m = adv.monsters[mid];
       const ms = state.monsterState[mid];
       return `<button class="option-btn monster-btn" data-attack="${mid}">&#x2694; ${m.name} (${ms.health}/${m.hp} HP)</button>`;
     }).join('');
@@ -823,10 +836,7 @@ function renderPhaseUI() {
     const hasOptions = validSpaces.length > 0 || attackable.length > 0;
 
     return `${bar}<div class="assign-section">
-      <div class="pair-header">
-        <span>Pair ${pIdx + 1}: [${pair.dice.join('+')}] = <b class="pair-total">${pair.total}</b></span>
-        <span class="other-pair">Pair ${pIdx === 0 ? 2 : 1}: ${otherPair.total}${otherDone ? ' ✓' : ''}</span>
-      </div>
+      <div class="pair-tabs">${pairTabs}</div>
       <div class="options-area">
         ${hasOptions
           ? `<div class="options-grid">${spaceButtons}${monsterButtons}</div>`
@@ -888,12 +898,21 @@ function renderSVGMap() {
   const W = 780, H = 510;
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="dungeon-map">`;
 
+  // Helper: clip a line between two circles so it starts/ends at the circle edge
+  function edgePts(ax, ay, ar, bx, by, br) {
+    const dx = bx - ax, dy = by - ay;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const ux = dx/len, uy = dy/len;
+    return { x1: ax + ux*ar, y1: ay + uy*ar, x2: bx - ux*br, y2: by - uy*br };
+  }
+
   // Regular edges (skip connections to monster rooms — those rendered as dashed access lines)
   const drawnEdges = new Set();
   for (const [id, sp] of Object.entries(adv.spaces)) {
     if (sp.type === 'monster') continue;
     const nA = adv.nodes[id];
     if (!nA) continue;
+    const rA = adv.spaces[id].type === 'start' ? 16 : 14;
     for (const nbrId of sp.adj) {
       const nbrSp = adv.spaces[nbrId];
       if (!nbrSp || nbrSp.type === 'monster') continue;
@@ -902,8 +921,10 @@ function renderSVGMap() {
       drawnEdges.add(edgeKey);
       const nB = adv.nodes[nbrId];
       if (!nB) continue;
+      const rB = nbrSp.type === 'start' ? 16 : 14;
       const bothVisited = isVisited(id) && isVisited(nbrId);
-      svg += `<line x1="${nA.x}" y1="${nA.y}" x2="${nB.x}" y2="${nB.y}" class="map-edge ${bothVisited ? 'visited' : ''}" />`;
+      const p = edgePts(nA.x, nA.y, rA, nB.x, nB.y, rB);
+      svg += `<line x1="${p.x1.toFixed(1)}" y1="${p.y1.toFixed(1)}" x2="${p.x2.toFixed(1)}" y2="${p.y2.toFixed(1)}" class="map-edge ${bothVisited ? 'visited' : ''}" />`;
     }
   }
 
@@ -918,17 +939,30 @@ function renderSVGMap() {
     for (const sid of monsterRoom.adj) {
       const sn = adv.nodes[sid];
       if (!sn) continue;
-      svg += `<line x1="${sn.x}" y1="${sn.y}" x2="${mn.x}" y2="${mn.y}" class="monster-access-line ${ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : ''}" />`;
+      // Clip access line: start at space circle edge, end at monster rect edge (approx r=18)
+      const p = edgePts(sn.x, sn.y, 14, mn.x, mn.y, 22);
+      svg += `<line x1="${p.x1.toFixed(1)}" y1="${p.y1.toFixed(1)}" x2="${p.x2.toFixed(1)}" y2="${p.y2.toFixed(1)}" class="monster-access-line ${ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : ''}" />`;
     }
 
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
     const pct = ms.health / m.hp;
-    svg += `<rect x="${mn.x-22}" y="${mn.y-14}" width="44" height="28" rx="4" class="${cls}" />`;
+    // Taller rect to fit name + attack numbers
+    const mW = 60, mH = ms.defeated ? 28 : 46;
+    svg += `<rect x="${mn.x-mW/2}" y="${mn.y-mH/2}" width="${mW}" height="${mH}" rx="4" class="${cls}" />`;
     if (!ms.defeated) {
-      svg += `<rect x="${mn.x-20}" y="${mn.y+2}" width="${Math.round(40*pct)}" height="6" class="monster-hp-fill" />`;
-      svg += `<rect x="${mn.x-20}" y="${mn.y+2}" width="40" height="6" fill="none" stroke="#555" stroke-width="1" />`;
+      const barY = mn.y + mH/2 - 9;
+      svg += `<rect x="${mn.x-mW/2+2}" y="${barY}" width="${Math.round((mW-4)*pct)}" height="5" class="monster-hp-fill" />`;
+      svg += `<rect x="${mn.x-mW/2+2}" y="${barY}" width="${mW-4}" height="5" fill="none" stroke="#555" stroke-width="1" />`;
+      // Name line
+      svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 11}" class="monster-label">${m.name.split(' ')[0]}</text>`;
+      // Black numbers (always usable), white numbers with unlock status
+      const blackStr = m.black.length ? `B:${m.black.join(',')}` : '';
+      const whiteStr = m.white.map(n => ms.unlockedWhite.has(n) ? `W:${n}` : `(${n})`).join(' ');
+      const numsLine = [blackStr, whiteStr].filter(Boolean).join(' ');
+      svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 24}" class="monster-nums-label">${numsLine}</text>`;
+    } else {
+      svg += `<text x="${mn.x}" y="${mn.y+5}" class="monster-label">✓ ${m.name.split(' ')[0]}</text>`;
     }
-    svg += `<text x="${mn.x}" y="${mn.y-2}" class="monster-label">${ms.defeated ? '✓' : m.name.split(' ')[0]}</text>`;
   }
 
   // Space nodes (read-only — monster rooms skipped, rendered above)
@@ -1017,11 +1051,12 @@ function attachListeners() {
   const app = document.getElementById('app');
   if (_appClickHandler) app.removeEventListener('click', _appClickHandler);
   _appClickHandler = e => {
-    const t = e.target.closest('[data-action],[data-realm],[data-split],[data-visitspace],[data-attack],[data-bswap],[data-chest]');
+    const t = e.target.closest('[data-action],[data-realm],[data-split],[data-visitspace],[data-attack],[data-bswap],[data-chest],[data-switchpair]');
     if (!t) return;
 
     if (t.dataset.realm)       { initGame(t.dataset.realm); return; }
     if (t.dataset.split)       { selectSplit(+t.dataset.split); return; }
+    if (t.dataset.switchpair !== undefined) { state.currentPair = +t.dataset.switchpair; render(); return; }
     if (t.dataset.visitspace)  {
       if (state.phase === 'torch') assignTorchToSpace(t.dataset.visitspace);
       else assignToSpace(t.dataset.visitspace);
