@@ -18,6 +18,83 @@ function pairSplits(w) {
   ];
 }
 
+// ─── Force-directed map layout ────────────────────────────────────────────────
+// Runs once at load; returns updated node positions for non-monster spaces.
+// Start spaces are pinned to the left/right edges; monster rooms are fixed
+// attractors. All other nodes are pushed apart (repulsion) and pulled toward
+// their graph neighbours (spring attraction) until the layout settles.
+
+function forceLayout(spaces, nodes) {
+  const pos = {};
+  const W = 740, H = 485, PAD = 38;
+
+  // Initialise from hand-placed coordinates
+  for (const [id, sp] of Object.entries(spaces)) {
+    if (sp.type === 'monster') continue;
+    pos[id] = { x: nodes[id].x, y: nodes[id].y };
+  }
+
+  // Pinned start spaces (fixed)
+  const PINS = {
+    '1':{x:50,y:48},  '2':{x:50,y:116}, '3':{x:50,y:188},
+    '4':{x:50,y:258}, '5':{x:50,y:330}, '6':{x:50,y:400},
+    '7':{x:730,y:48}, '8':{x:730,y:130},'9':{x:730,y:215},
+    '10':{x:730,y:296},'11':{x:730,y:376},
+  };
+  Object.assign(pos, PINS);
+
+  // Fixed attractor positions for monster rooms (not rendered by force layout)
+  const MPOS = {
+    '12':{x:258,y:62}, '13':{x:660,y:196},'14':{x:198,y:238},
+    '15':{x:412,y:392},'16':{x:500,y:460},'17':{x:678,y:448},'18':{x:662,y:328},
+  };
+
+  const ids = Object.keys(pos);
+  const KR = 5500, KA = 0.07, IDEAL = 76;
+
+  for (let t = 0; t < 900; t++) {
+    const fx = {}, fy = {};
+    for (const id of ids) { fx[id] = 0; fy[id] = 0; }
+
+    // Repulsion between every node pair
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = ids[i], b = ids[j];
+        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
+        const d2 = dx*dx + dy*dy || 0.01, d = Math.sqrt(d2);
+        const f = KR / d2;
+        fx[a] -= f*dx/d; fy[a] -= f*dy/d;
+        fx[b] += f*dx/d; fy[b] += f*dy/d;
+      }
+    }
+
+    // Spring attraction along graph edges (including edges to monster rooms)
+    for (const [id, sp] of Object.entries(spaces)) {
+      if (!pos[id]) continue;
+      for (const nbr of sp.adj) {
+        const np = pos[nbr] || MPOS[nbr];
+        if (!np) continue;
+        const dx = np.x - pos[id].x, dy = np.y - pos[id].y;
+        const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
+        const f = KA * (d - IDEAL);
+        if (!PINS[id]) { fx[id] += f*dx/d; fy[id] += f*dy/d; }
+      }
+    }
+
+    // Apply with linear cooling schedule
+    const cool = Math.max(0.08, 1 - t / 800);
+    for (const id of ids) {
+      if (PINS[id]) { pos[id] = { ...PINS[id] }; continue; }
+      pos[id].x = Math.max(PAD, Math.min(W, pos[id].x + fx[id] * cool));
+      pos[id].y = Math.max(PAD, Math.min(H, pos[id].y + fy[id] * cool));
+    }
+  }
+
+  const result = {};
+  for (const [id, p] of Object.entries(pos)) result[id] = { x: Math.round(p.x), y: Math.round(p.y) };
+  return result;
+}
+
 // ─── Adventure Builder ────────────────────────────────────────────────────────
 
 function buildAnimals() {
@@ -164,11 +241,14 @@ function buildAnimals() {
     '70':{x:580, y:240},
   };
 
+  // Compute force-directed layout; merge over hand-placed monster room coords
+  const computedNodes = Object.assign({}, nodes, forceLayout(spaces, nodes));
+
   return {
     key:'animals', name:'Annoyed Animals', difficulty:'Novice', color:'#7a9b5c',
     leftStarts:  ['1','2','3','4','5','6'],
     rightStarts: ['7','8','9','10','11'],
-    spaces, monsters, nodes,
+    spaces, monsters, nodes: computedNodes,
     achievements: {
       startsLinked: {label:'Connect both start clusters via visited path', done:false, gemFirst:1, gemSub:0, type:'path'},
       fist5of6:     {label:'5 of 6 Fist spaces', count:0, threshold:5, total:6, done:false, gemFirst:3, gemSub:1, type:'count'},
@@ -995,19 +1075,20 @@ function renderSVGMap() {
     const r = sp.type === 'start' ? 16 : 14;
     svg += `<circle cx="${n.x}" cy="${n.y}" r="${r}" class="${cls}" />`;
 
-    // Doubles spaces: two mini dice icons (no text label)
     if (sp.type === 'doubles' && !vis) {
+      // Two mini dice icons — no number (any doubles works)
       svg += `<rect x="${n.x-13}" y="${n.y-7}" width="10" height="10" rx="2" class="dice-icon-mini"/>`;
       svg += `<circle cx="${n.x-8}" cy="${n.y-2}" r="1.5" class="dice-pip-mini"/>`;
       svg += `<rect x="${n.x+3}" y="${n.y-7}" width="10" height="10" rx="2" class="dice-icon-mini"/>`;
       svg += `<circle cx="${n.x+8}" cy="${n.y-2}" r="1.5" class="dice-pip-mini"/>`;
+    } else if (sp.type === 'fist' && !vis) {
+      // Fist icon (top) + "n+n" required pair value (bottom)
+      svg += `<text x="${n.x}" y="${n.y-1}" class="fist-icon-lbl">✊</text>`;
+      svg += `<text x="${n.x}" y="${n.y+9}" class="fist-val-lbl">${sp.value/2}+${sp.value/2}</text>`;
     } else {
-      // Fist spaces: show the required pair as "n+n"; other spaces show value or ✓
       let lbl = sp.value !== null ? String(sp.value) : '';
-      if (sp.type === 'fist') lbl = `${sp.value/2}+${sp.value/2}`;
       if (vis && sp.type !== 'start' && sp.type !== 'fist') lbl = '✓';
-      const lblCls = sp.type === 'fist' ? 'space-label fist-label' : 'space-label';
-      svg += `<text x="${n.x}" y="${n.y+4}" class="${lblCls}">${lbl}</text>`;
+      svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${lbl}</text>`;
     }
   }
 
@@ -1016,22 +1097,24 @@ function renderSVGMap() {
   svg += `<line x1="0" y1="${ly-4}" x2="${W}" y2="${ly-4}" stroke="#333" stroke-width="1"/>`;
   const legend = [
     { x:14,  cls:'space-node start-node',   label:'Start (any roll)' },
-    { x:130, cls:'space-node gem-node',      label:'Gem' },
-    { x:185, cls:'space-node chest-node',    label:'Chest' },
-    { x:240, cls:'space-node fist-node',     label:'Fist (n+n pair)' },
-    { x:380, cls:'space-node doubles-node',  label:'Any Doubles' },
-    { x:490, cls:'space-node visited',       label:'Visited' },
+    { x:135, cls:'space-node gem-node',      label:'Gem' },
+    { x:193, cls:'space-node chest-node',    label:'Chest (gold)' },
+    { x:288, cls:'space-node fist-node',     label:'Fist ✊ (n+n pair)' },
+    { x:430, cls:'space-node doubles-node',  label:'Any Doubles' },
+    { x:543, cls:'space-node visited',       label:'Visited' },
   ];
   for (const {x, cls, label} of legend) {
     svg += `<circle cx="${x}" cy="${ly+6}" r="8" class="${cls}"/>`;
     svg += `<text x="${x+13}" y="${ly+10}" class="legend-text">${label}</text>`;
   }
-  // doubles mini-dice in the legend circle
-  svg += `<rect x="373" y="${ly}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
-  svg += `<rect x="381" y="${ly}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
+  // doubles mini-dice in legend
+  svg += `<rect x="423" y="${ly}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
+  svg += `<rect x="431" y="${ly}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
+  // fist icon in legend
+  svg += `<text x="288" y="${ly+8}" class="fist-icon-lbl" style="font-size:8px">✊</text>`;
   // Monster legend entry
-  svg += `<rect x="592" y="${ly-2}" width="48" height="18" rx="3" class="monster-node"/>`;
-  svg += `<text x="616" y="${ly+10}" class="monster-label">Monster</text>`;
+  svg += `<rect x="640" y="${ly-2}" width="48" height="18" rx="3" class="monster-node"/>`;
+  svg += `<text x="664" y="${ly+10}" class="monster-label">Monster</text>`;
 
   svg += '</svg>';
   return svg;

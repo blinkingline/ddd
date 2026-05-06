@@ -621,7 +621,7 @@ body, html {
 .space-node.fist-node    { fill: #3a2a0a; stroke: #e67e22; stroke-width: 2; }
 .space-node.gold-node    { fill: #3a3a0a; stroke: #f1c40f; stroke-width: 2; }
 .space-node.gem-node     { fill: #0a2a3a; stroke: #3498db; stroke-width: 2; }
-.space-node.chest-node   { fill: #2a1a3a; stroke: #9b59b6; stroke-width: 2; }
+.space-node.chest-node   { fill: #2a1800; stroke: #f39c12; stroke-width: 2; }
 .space-node.rubble-node  { fill: #2a1a0a; stroke: #795548; stroke-width: 2; }
 .space-node.cloud-node   { fill: #1a2a3a; stroke: #8e9cc0; stroke-width: 2; }
 .space-node.claw-node    { fill: #3a1a1a; stroke: #c0392b; stroke-width: 2; }
@@ -653,7 +653,8 @@ body, html {
 .monster-node.defeated { fill: #1a1a1a; stroke: #555; opacity: 0.5; }
 .monster-hp-fill      { fill: #e74c3c; }
 .monster-label        { text-anchor: middle; font-size: 8px; fill: #eee; pointer-events: none; font-family: 'Courier New', monospace; }
-.fist-label           { font-size: 8px; }
+.fist-icon-lbl        { text-anchor: middle; font-size: 9px; pointer-events: none; }
+.fist-val-lbl         { text-anchor: middle; font-size: 7px; fill: #f39c12; font-family: 'Courier New', monospace; pointer-events: none; font-weight: bold; }
 .dice-icon-mini       { fill: #1a1a2a; stroke: #9b59b6; stroke-width: 1; pointer-events: none; }
 .dice-pip-mini        { fill: #9b59b6; pointer-events: none; }
 .legend-text          { font-size: 8px; fill: #888; font-family: 'Courier New', monospace; pointer-events: none; }
