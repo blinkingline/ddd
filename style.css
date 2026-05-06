@@ -823,6 +823,18 @@ body, html {
 /* ── Pair box: black die used ── */
 .pair-box.black-used { border-color: #f1c40f; color: #f1c40f; }
 
+/* ── Solo badge ── */
+.solo-badge {
+  padding: 4px 10px;
+  border: 1px solid var(--theme-color);
+  border-radius: 4px;
+  font-size: 0.75em;
+  font-weight: bold;
+  color: var(--theme-color);
+  letter-spacing: 2px;
+  opacity: 0.8;
+}
+
 /* ── Responsive ── */
 @media (max-width: 700px) {
   .game-grid {

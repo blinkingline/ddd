@@ -665,7 +665,10 @@ function renderHeader() {
   const adv = getAdv();
   return `<div class="game-header">
     <h2>${adv.name} <span style="font-size:0.6em;color:#aaa">${adv.difficulty}</span></h2>
-    <button class="quit-btn" data-action="quit">Exit</button>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="solo-badge">SOLO</span>
+      <button class="quit-btn" data-action="quit">Exit</button>
+    </div>
   </div>`;
 }
 
