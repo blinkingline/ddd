@@ -1008,8 +1008,12 @@ function renderGameOver() {
 
 // ─── Events ───────────────────────────────────────────────────────────────────
 
+let _appClickHandler = null;
+
 function attachListeners() {
-  document.getElementById('app').addEventListener('click', e => {
+  const app = document.getElementById('app');
+  if (_appClickHandler) app.removeEventListener('click', _appClickHandler);
+  _appClickHandler = e => {
     const t = e.target.closest('[data-action],[data-realm],[data-split],[data-visitspace],[data-attack],[data-bswap],[data-chest]');
     if (!t) return;
 
@@ -1031,7 +1035,8 @@ function attachListeners() {
     else if (action === 'useTorch')     useTorch();
     else if (action === 'cancelTorch')  { state.phase = 'assignPair'; render(); }
     else if (action === 'quit')         { state.screen = 'setup'; render(); }
-  }, { once: true });
+  };
+  app.addEventListener('click', _appClickHandler);
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
