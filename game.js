@@ -176,7 +176,6 @@ const ADVENTURES = {
 const state = {
   screen: 'setup',
   adventure: null,
-  clusterChoice: null,
   life: 10, maxLife: 10, extraLife: 0,
   blackDieUses: 3,
   gems: 0, gold: 0, torches: 0,
@@ -204,21 +203,20 @@ function initGame(advKey) {
   Object.assign(state, {
     screen: 'playing',
     adventure: advKey,
-    clusterChoice: null,
     life: 10, maxLife: 10, extraLife: 0,
     blackDieUses: 3,
     gems: 0, gold: 0, torches: 0,
     visitedSpaces: new Set(),
     rubbleProgress: {},
     bossDamageDealt: 0,
-    phase: 'clusterSelect',
+    phase: 'roll',
     whiteDice: [0,0,0,0], blackDie: 0,
     selectedSplit: null, useBlackDieInPair: null,
     pairs: null, pairActions: [null, null],
     currentPair: 0,
     roundDamageDealt: false, damageExemptForfeit: false,
     pendingChest: null,
-    message: 'Choose your starting cluster.',
+    message: `Welcome to ${adv.name}! Roll the dice to begin.`,
   });
   const monsterState = {};
   for (const [id, m] of Object.entries(adv.monsters)) {
@@ -264,14 +262,8 @@ function canVisitSpace(spaceId, pair) {
   const num = sp.value;
   if (num === null || num !== pair.total) return false;
 
-  if (sp.type === 'start') {
-    // Chosen cluster: free visit, no adjacency required
-    const inChosen = state.clusterChoice === 'left'
-      ? adv.leftStarts.includes(spaceId)
-      : adv.rightStarts.includes(spaceId);
-    if (inChosen) return true;
-    return hasAdjacentVisited(spaceId);
-  }
+  // Any start space is freely visitable with a matching roll — no adjacency required
+  if (sp.type === 'start') return true;
 
   // Fist spaces: need matching value AND doubles
   if (sp.type === 'fist' && pair.dice[0] !== pair.dice[1]) return false;
@@ -301,15 +293,6 @@ function getAttackableMonsters(pair) {
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
-function chooseCluster(side) {
-  state.clusterChoice = side;
-  state.phase = 'roll';
-  const adv = getAdv();
-  const nums = (side === 'left' ? adv.leftStarts : adv.rightStarts)
-    .map(id => adv.spaces[id].value).sort((a, b) => a - b).join(', ');
-  state.message = `Starting in ${side === 'left' ? 'Left' : 'Right'} cluster (${nums}). Roll the dice!`;
-  render();
-}
 
 function rollDice() {
   state.whiteDice = [d6(), d6(), d6(), d6()];
@@ -680,10 +663,8 @@ function renderGame() {
 
 function renderHeader() {
   const adv = getAdv();
-  const clusterLabel = state.clusterChoice
-    ? ` <span style="font-size:0.55em;color:#aaa">[${state.clusterChoice === 'left' ? 'Left' : 'Right'} cluster]</span>` : '';
   return `<div class="game-header">
-    <h2>${adv.name}${clusterLabel} <span style="font-size:0.6em;color:#aaa">${adv.difficulty}</span></h2>
+    <h2>${adv.name} <span style="font-size:0.6em;color:#aaa">${adv.difficulty}</span></h2>
     <button class="quit-btn" data-action="quit">Exit</button>
   </div>`;
 }
@@ -762,8 +743,7 @@ function spaceOptionLabel(spaceId) {
 }
 
 function renderPhaseUI() {
-  if (state.phase === 'clusterSelect') return renderClusterSelect();
-  if (state.phase === 'chest')         return renderChestModal();
+  if (state.phase === 'chest') return renderChestModal();
   if (state.phase === 'torch')         return renderTorchUI();
 
   const steps = {roll:'Roll', selectSplit:'Split', confirmPairs:'Confirm', assignPair:'Assign'};
@@ -859,25 +839,6 @@ function renderPhaseUI() {
   return bar;
 }
 
-function renderClusterSelect() {
-  const adv = getAdv();
-  const leftNums  = adv.leftStarts.map(id  => adv.spaces[id].value).sort((a, b) => a - b).join(', ');
-  const rightNums = adv.rightStarts.map(id => adv.spaces[id].value).sort((a, b) => a - b).join(', ');
-  return `<div class="cluster-select">
-    <h3>Choose your starting cluster</h3>
-    <p class="cluster-hint">Start spaces in your chosen cluster can be visited with a matching roll — no adjacency required. You can reach the other cluster later by connecting through the middle.</p>
-    <div class="cluster-options">
-      <button class="cluster-btn" data-cluster="left">
-        <div class="cluster-title">Left Cluster</div>
-        <div class="cluster-nums">${leftNums}</div>
-      </button>
-      <button class="cluster-btn" data-cluster="right">
-        <div class="cluster-title">Right Cluster</div>
-        <div class="cluster-nums">${rightNums}</div>
-      </button>
-    </div>
-  </div>`;
-}
 
 function renderChestModal() {
   return `<div class="chest-modal">
@@ -985,13 +946,6 @@ function renderSVGMap() {
     if (vis)         cls += ' visited';
     if (highlighted) cls += ' available';
 
-    if (sp.type === 'start' && state.clusterChoice && !vis) {
-      const inChosen = state.clusterChoice === 'left'
-        ? adv.leftStarts.includes(id)
-        : adv.rightStarts.includes(id);
-      if (!inChosen) cls += ' other-cluster';
-    }
-
     const r = sp.type === 'start' ? 16 : 14;
     svg += `<circle cx="${n.x}" cy="${n.y}" r="${r}" class="${cls}" />`;
 
@@ -1056,11 +1010,10 @@ function renderGameOver() {
 
 function attachListeners() {
   document.getElementById('app').addEventListener('click', e => {
-    const t = e.target.closest('[data-action],[data-realm],[data-split],[data-visitspace],[data-attack],[data-bswap],[data-chest],[data-cluster]');
+    const t = e.target.closest('[data-action],[data-realm],[data-split],[data-visitspace],[data-attack],[data-bswap],[data-chest]');
     if (!t) return;
 
     if (t.dataset.realm)       { initGame(t.dataset.realm); return; }
-    if (t.dataset.cluster)     { chooseCluster(t.dataset.cluster); return; }
     if (t.dataset.split)       { selectSplit(+t.dataset.split); return; }
     if (t.dataset.visitspace)  {
       if (state.phase === 'torch') assignTorchToSpace(t.dataset.visitspace);
