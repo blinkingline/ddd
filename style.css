@@ -653,6 +653,10 @@ body, html {
 .monster-node.defeated { fill: #1a1a1a; stroke: #555; opacity: 0.5; }
 .monster-hp-fill      { fill: #e74c3c; }
 .monster-label        { text-anchor: middle; font-size: 8px; fill: #eee; pointer-events: none; font-family: 'Courier New', monospace; }
+.fist-label           { font-size: 8px; }
+.dice-icon-mini       { fill: #1a1a2a; stroke: #9b59b6; stroke-width: 1; pointer-events: none; }
+.dice-pip-mini        { fill: #9b59b6; pointer-events: none; }
+.legend-text          { font-size: 8px; fill: #888; font-family: 'Courier New', monospace; pointer-events: none; }
 .monster-access-line  { stroke: #555; stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.4; }
 .monster-access-line.accessible { stroke: #e74c3c; opacity: 0.7; }
 .monster-access-line.defeated   { stroke: #555; opacity: 0.2; }

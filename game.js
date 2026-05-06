@@ -127,32 +127,41 @@ function buildAnimals() {
     '18': {id:'18', name:'Punk Hare',      hp:5,  isBoss:false, isArmored:false, black:[3,11], white:[],           gemFirst:3, gemSub:1, lifeLoss:0},
   };
 
-  // SVG node positions — approximate first-pass layout, refineable once visible
+  // SVG node positions — hand-tuned to minimise edge crossings
   const nodes = {
-    '1':{x:55,y:60},   '2':{x:55,y:140},  '3':{x:55,y:220},
-    '4':{x:55,y:300},  '5':{x:55,y:380},  '6':{x:120,y:450},
-    '7':{x:745,y:60},  '8':{x:745,y:150}, '9':{x:745,y:230},
-    '10':{x:660,y:150},'11':{x:660,y:60},
-    '12':{x:355,y:55}, '13':{x:610,y:215},'14':{x:235,y:180},
-    '15':{x:390,y:470},'16':{x:505,y:375},'17':{x:665,y:420},'18':{x:650,y:305},
-    '19':{x:355,y:110},'20':{x:545,y:365},'21':{x:655,y:220},
-    '22':{x:445,y:195},'23':{x:145,y:450},'24':{x:150,y:480},
-    '25':{x:355,y:455},'26':{x:600,y:155},'27':{x:200,y:405},
-    '28':{x:545,y:445},'29':{x:545,y:230},'30':{x:680,y:465},
-    '31':{x:280,y:460},'32':{x:450,y:55}, '33':{x:580,y:55},
-    '34':{x:550,y:355},'35':{x:520,y:185},'36':{x:360,y:380},
-    '37':{x:155,y:220},'38':{x:530,y:115},'39':{x:435,y:160},
-    '40':{x:155,y:90}, '41':{x:155,y:285},'42':{x:195,y:440},
-    '43':{x:155,y:370},'44':{x:255,y:85}, '45':{x:255,y:160},
-    '46':{x:355,y:175},'47':{x:355,y:255},'48':{x:450,y:330},
-    '49':{x:445,y:260},'50':{x:450,y:400},'51':{x:600,y:270},
-    '52':{x:685,y:115},'53':{x:710,y:180},'54':{x:325,y:385},
-    '55':{x:385,y:330},'56':{x:455,y:290},'57':{x:545,y:290},
-    '58':{x:515,y:340},'59':{x:570,y:375},'60':{x:625,y:395},
-    '61':{x:570,y:385},'62':{x:490,y:375},'63':{x:425,y:425},
-    '64':{x:440,y:445},'65':{x:305,y:315},'66':{x:245,y:255},
-    '67':{x:490,y:75}, '68':{x:620,y:100},'69':{x:465,y:460},
-    '70':{x:545,y:265},
+    // ── Left starts (left edge, evenly spaced) ────────────────────────────────
+    '1': {x:50,  y:50},   '2': {x:50,  y:118},  '3': {x:50,  y:190},
+    '4': {x:50,  y:260},  '5': {x:50,  y:332},  '6': {x:50,  y:400},
+    // ── Right starts (right edge) ─────────────────────────────────────────────
+    '7': {x:730, y:50},   '8': {x:730, y:132},  '9': {x:730, y:218},
+    '10':{x:730, y:298},  '11':{x:730, y:378},
+    // ── Monster rooms ─────────────────────────────────────────────────────────
+    '12':{x:248, y:48},   '13':{x:658, y:198},  '14':{x:222, y:215},
+    '15':{x:430, y:388},  '16':{x:515, y:448},  '17':{x:688, y:448},  '18':{x:665, y:332},
+    // ── Gem spaces ────────────────────────────────────────────────────────────
+    '19':{x:392, y:68},   '20':{x:574, y:295},  '21':{x:632, y:328},
+    '22':{x:518, y:182},  '23':{x:168, y:418},  '24':{x:240, y:430},
+    '25':{x:318, y:392},  '26':{x:634, y:260},  '27':{x:212, y:362},
+    // ── Fist spaces ───────────────────────────────────────────────────────────
+    '28':{x:555, y:392},  '29':{x:598, y:272},  '30':{x:725, y:455},
+    '31':{x:232, y:462},  '32':{x:282, y:48},
+    // ── Doubles spaces ────────────────────────────────────────────────────────
+    '33':{x:495, y:82},   '34':{x:602, y:388},  '35':{x:574, y:250},
+    '36':{x:352, y:328},  '37':{x:136, y:165},
+    // ── Chest spaces ──────────────────────────────────────────────────────────
+    '38':{x:425, y:118},  '39':{x:542, y:262},
+    // ── Regular spaces ────────────────────────────────────────────────────────
+    '40':{x:138, y:84},   '41':{x:136, y:228},  '42':{x:136, y:372},
+    '43':{x:136, y:298},  '44':{x:242, y:142},  '45':{x:328, y:98},
+    '46':{x:390, y:150},  '47':{x:455, y:198},  '48':{x:490, y:282},
+    '49':{x:442, y:258},  '50':{x:545, y:352},  '51':{x:588, y:318},
+    '52':{x:652, y:92},   '53':{x:712, y:168},  '54':{x:448, y:308},
+    '55':{x:490, y:348},  '56':{x:548, y:295},  '57':{x:618, y:308},
+    '58':{x:618, y:382},  '59':{x:648, y:415},  '60':{x:650, y:450},
+    '61':{x:665, y:390},  '62':{x:565, y:435},  '63':{x:480, y:452},
+    '64':{x:412, y:458},  '65':{x:302, y:272},  '66':{x:278, y:238},
+    '67':{x:362, y:172},  '68':{x:598, y:128},  '69':{x:532, y:222},
+    '70':{x:580, y:240},
   };
 
   return {
@@ -895,7 +904,7 @@ function renderSVGMap() {
     : new Set();
   const highlightSet = new Set([...validSet, ...torchSet]);
 
-  const W = 780, H = 510;
+  const W = 780, H = 530;
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="dungeon-map">`;
 
   // Helper: clip a line between two circles so it starts/ends at the circle edge
@@ -986,11 +995,43 @@ function renderSVGMap() {
     const r = sp.type === 'start' ? 16 : 14;
     svg += `<circle cx="${n.x}" cy="${n.y}" r="${r}" class="${cls}" />`;
 
-    let lbl = sp.value !== null ? String(sp.value) : '✊✊';
-    if (sp.type === 'fist') lbl = sp.value + '✊';
-    if (vis && sp.type !== 'start' && sp.type !== 'fist') lbl = '✓';
-    svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${lbl}</text>`;
+    // Doubles spaces: two mini dice icons (no text label)
+    if (sp.type === 'doubles' && !vis) {
+      svg += `<rect x="${n.x-13}" y="${n.y-7}" width="10" height="10" rx="2" class="dice-icon-mini"/>`;
+      svg += `<circle cx="${n.x-8}" cy="${n.y-2}" r="1.5" class="dice-pip-mini"/>`;
+      svg += `<rect x="${n.x+3}" y="${n.y-7}" width="10" height="10" rx="2" class="dice-icon-mini"/>`;
+      svg += `<circle cx="${n.x+8}" cy="${n.y-2}" r="1.5" class="dice-pip-mini"/>`;
+    } else {
+      // Fist spaces: show the required pair as "n+n"; other spaces show value or ✓
+      let lbl = sp.value !== null ? String(sp.value) : '';
+      if (sp.type === 'fist') lbl = `${sp.value/2}+${sp.value/2}`;
+      if (vis && sp.type !== 'start' && sp.type !== 'fist') lbl = '✓';
+      const lblCls = sp.type === 'fist' ? 'space-label fist-label' : 'space-label';
+      svg += `<text x="${n.x}" y="${n.y+4}" class="${lblCls}">${lbl}</text>`;
+    }
   }
+
+  // ── Legend ────────────────────────────────────────────────────────────────
+  const ly = 514;
+  svg += `<line x1="0" y1="${ly-4}" x2="${W}" y2="${ly-4}" stroke="#333" stroke-width="1"/>`;
+  const legend = [
+    { x:14,  cls:'space-node start-node',   label:'Start (any roll)' },
+    { x:130, cls:'space-node gem-node',      label:'Gem' },
+    { x:185, cls:'space-node chest-node',    label:'Chest' },
+    { x:240, cls:'space-node fist-node',     label:'Fist (n+n pair)' },
+    { x:380, cls:'space-node doubles-node',  label:'Any Doubles' },
+    { x:490, cls:'space-node visited',       label:'Visited' },
+  ];
+  for (const {x, cls, label} of legend) {
+    svg += `<circle cx="${x}" cy="${ly+6}" r="8" class="${cls}"/>`;
+    svg += `<text x="${x+13}" y="${ly+10}" class="legend-text">${label}</text>`;
+  }
+  // doubles mini-dice in the legend circle
+  svg += `<rect x="373" y="${ly}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
+  svg += `<rect x="381" y="${ly}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
+  // Monster legend entry
+  svg += `<rect x="592" y="${ly-2}" width="48" height="18" rx="3" class="monster-node"/>`;
+  svg += `<text x="616" y="${ly+10}" class="monster-label">Monster</text>`;
 
   svg += '</svg>';
   return svg;
