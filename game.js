@@ -69,8 +69,11 @@ function forceLayout(spaces, nodes) {
   }
 
   function clamp(id) {
-    pos[id].x = Math.max(PAD, Math.min(W, pos[id].x));
-    pos[id].y = Math.max(PAD, Math.min(H, pos[id].y));
+    if (PINS[id]) return;
+    // Inner bounds ensure non-start nodes stay ≥ 34px from left/right start nodes (x=50 and x=730)
+    // and ≥ 36px from top start nodes (y=48), preventing corner-trap overlaps.
+    pos[id].x = Math.max(84, Math.min(696, pos[id].x));
+    pos[id].y = Math.max(84, Math.min(H - PAD, pos[id].y));
   }
 
   // ── Phase 1: spring simulation ─────────────────────────────────────────────
@@ -120,12 +123,13 @@ function forceLayout(spaces, nodes) {
       for (let j = i + 1; j < ids.length; j++) {
         const a = ids[i], b = ids[j];
         const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
-        const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
+        const d = Math.sqrt(dx*dx + dy*dy);
         const minD = rOf(a) + rOf(b) + 2;
         if (d < minD) {
           any = true;
-          const push = (minD - d) / 2 + 0.5;
-          const ux = dx/d, uy = dy/d;
+          const push = (minD - (d || 0.01)) / 2 + 0.5;
+          // When nodes are at the same position, push along x axis to break the tie
+          const ux = d > 0.001 ? dx/d : 1, uy = d > 0.001 ? dy/d : 0;
           if (!PINS[a]) { pos[a].x -= ux*push; pos[a].y -= uy*push; clamp(a); }
           if (!PINS[b]) { pos[b].x += ux*push; pos[b].y += uy*push; clamp(b); }
         }
@@ -167,6 +171,43 @@ function forceLayout(spaces, nodes) {
     if (!any) break;
   }
 
+  // ── Phase 3.5: push nodes clear of non-adjacent monster rects ─────────────
+  {
+    const BOSS_ID = '15';
+    const MARGIN = 8;
+    const mRects = [];
+    for (const [mid, sp] of Object.entries(spaces)) {
+      if (sp.type !== 'monster') continue;
+      const mp = MPOS[mid];
+      if (!mp) continue;
+      const hw = (mid === BOSS_ID ? 44 : 30) + MARGIN;
+      const hh = (mid === BOSS_ID ? 31 : 23) + MARGIN;
+      mRects.push({ id: mid, cx: mp.x, cy: mp.y, hw, hh });
+    }
+    for (let pass = 0; pass < 60; pass++) {
+      let any = false;
+      for (const id of ids) {
+        if (PINS[id]) continue;
+        const aset = adjOf[id];
+        for (const { id: mid, cx, cy, hw, hh } of mRects) {
+          if (aset.has(mid)) continue;
+          const dx = pos[id].x - cx, dy = pos[id].y - cy;
+          const ox = hw - Math.abs(dx), oy = hh - Math.abs(dy);
+          if (ox > 0 && oy > 0) {
+            any = true;
+            if (ox < oy) {
+              pos[id].x += dx >= 0 ? ox + 1 : -(ox + 1);
+            } else {
+              pos[id].y += dy >= 0 ? oy + 1 : -(oy + 1);
+            }
+            clamp(id);
+          }
+        }
+      }
+      if (!any) break;
+    }
+  }
+
   // ── Phase 4: final hard separation after phase-3 moves ────────────────────
   for (let pass = 0; pass < 100; pass++) {
     let any = false;
@@ -174,12 +215,13 @@ function forceLayout(spaces, nodes) {
       for (let j = i + 1; j < ids.length; j++) {
         const a = ids[i], b = ids[j];
         const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
-        const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
+        const d = Math.sqrt(dx*dx + dy*dy);
         const minD = rOf(a) + rOf(b) + 2;
         if (d < minD) {
           any = true;
-          const push = (minD - d) / 2 + 0.5;
-          const ux = dx/d, uy = dy/d;
+          const push = (minD - (d || 0.01)) / 2 + 0.5;
+          // When nodes are at the same position, push along x axis to break the tie
+          const ux = d > 0.001 ? dx/d : 1, uy = d > 0.001 ? dy/d : 0;
           if (!PINS[a]) { pos[a].x -= ux*push; pos[a].y -= uy*push; clamp(a); }
           if (!PINS[b]) { pos[b].x += ux*push; pos[b].y += uy*push; clamp(b); }
         }
@@ -312,7 +354,7 @@ function buildAnimals() {
     '10':{x:730, y:298},  '11':{x:730, y:378},
     // ── Monster rooms ─────────────────────────────────────────────────────────
     '12':{x:248, y:48},   '13':{x:658, y:198},  '14':{x:222, y:215},
-    '15':{x:430, y:388},  '16':{x:515, y:448},  '17':{x:688, y:448},  '18':{x:665, y:332},
+    '15':{x:385, y:255},  '16':{x:515, y:448},  '17':{x:688, y:448},  '18':{x:665, y:332},
     // ── Gem spaces ────────────────────────────────────────────────────────────
     '19':{x:392, y:68},   '20':{x:574, y:295},  '21':{x:632, y:328},
     '22':{x:518, y:182},  '23':{x:168, y:418},  '24':{x:240, y:430},
@@ -1126,15 +1168,16 @@ function renderSVGMap() {
     for (const sid of monsterRoom.adj) {
       const sn = adv.nodes[sid];
       if (!sn) continue;
-      // Clip access line: start at space circle edge, end at monster rect edge (approx r=18)
-      const p = edgePts(sn.x, sn.y, 14, mn.x, mn.y, 22);
+      // Clip access line: start at space circle edge, end at monster rect edge
+      const mClip = m.isBoss ? 36 : 22;
+      const p = edgePts(sn.x, sn.y, 14, mn.x, mn.y, mClip);
       svg += `<line x1="${p.x1.toFixed(1)}" y1="${p.y1.toFixed(1)}" x2="${p.x2.toFixed(1)}" y2="${p.y2.toFixed(1)}" class="monster-access-line ${ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : ''}" />`;
     }
 
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
     const pct = ms.health / m.hp;
-    // Taller rect to fit name + attack numbers
-    const mW = 60, mH = ms.defeated ? 28 : 46;
+    const mW = m.isBoss ? 90 : 60;
+    const mH = ms.defeated ? 28 : (m.isBoss ? 64 : 46);
     svg += `<rect x="${mn.x-mW/2}" y="${mn.y-mH/2}" width="${mW}" height="${mH}" rx="4" class="${cls}" />`;
     if (!ms.defeated) {
       const barY = mn.y + mH/2 - 9;
@@ -1142,11 +1185,18 @@ function renderSVGMap() {
       svg += `<rect x="${mn.x-mW/2+2}" y="${barY}" width="${mW-4}" height="5" fill="none" stroke="#555" stroke-width="1" />`;
       // Name line
       svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 11}" class="monster-label">${m.name.split(' ')[0]}</text>`;
-      // Black numbers (always usable), white numbers with unlock status
+      // Attack numbers — boss splits white across two lines to fit
       const blackStr = m.black.length ? `B:${m.black.join(',')}` : '';
-      const whiteStr = m.white.map(n => ms.unlockedWhite.has(n) ? `W:${n}` : `(${n})`).join(' ');
-      const numsLine = [blackStr, whiteStr].filter(Boolean).join(' ');
-      svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 24}" class="monster-nums-label">${numsLine}</text>`;
+      const whites = m.white.map(n => ms.unlockedWhite.has(n) ? `W:${n}` : `(${n})`);
+      if (m.isBoss && whites.length > 3) {
+        const line1 = [blackStr, ...whites.slice(0, 3)].filter(Boolean).join(' ');
+        const line2 = whites.slice(3).join(' ');
+        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 24}" class="monster-nums-label">${line1}</text>`;
+        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 34}" class="monster-nums-label">${line2}</text>`;
+      } else {
+        const numsLine = [blackStr, ...whites].filter(Boolean).join(' ');
+        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 24}" class="monster-nums-label">${numsLine}</text>`;
+      }
     } else {
       svg += `<text x="${mn.x}" y="${mn.y+5}" class="monster-label">✓ ${m.name.split(' ')[0]}</text>`;
     }
