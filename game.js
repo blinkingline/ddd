@@ -21,128 +21,148 @@ function pairSplits(w) {
 // ─── Adventure Builder ────────────────────────────────────────────────────────
 
 function buildAnimals() {
-  const spaces = {
-    // Left cluster start spaces — free to visit with matching roll, no adjacency needed
-    sl2:  {id:'sl2',  num:2,  type:'start', label:'2'},
-    sl3:  {id:'sl3',  num:3,  type:'start', label:'3'},
-    sl6:  {id:'sl6',  num:6,  type:'start', label:'6'},
-    sl7:  {id:'sl7',  num:7,  type:'start', label:'7'},
-    sl9:  {id:'sl9',  num:9,  type:'start', label:'9'},
-    sl12: {id:'sl12', num:12, type:'start', label:'12'},
-    // Right cluster start spaces
-    sr4:  {id:'sr4',  num:4,  type:'start', label:'4'},
-    sr5:  {id:'sr5',  num:5,  type:'start', label:'5'},
-    sr8:  {id:'sr8',  num:8,  type:'start', label:'8'},
-    sr10: {id:'sr10', num:10, type:'start', label:'10'},
-    sr11: {id:'sr11', num:11, type:'start', label:'11'},
-    // Fist spaces
-    f2a:  {id:'f2a',  num:2,  type:'fist', label:'2'},
-    f4a:  {id:'f4a',  num:4,  type:'fist', label:'4'},
-    f6a:  {id:'f6a',  num:6,  type:'fist', label:'6'},
-    f8a:  {id:'f8a',  num:8,  type:'fist', label:'8'},
-    f10a: {id:'f10a', num:10, type:'fist', label:'10'},
-    f12a: {id:'f12a', num:12, type:'fist', label:'12'},
-    // Regular spaces
-    r2a:  {id:'r2a',  num:2,  type:'regular', label:'2'},
-    r3a:  {id:'r3a',  num:3,  type:'regular', label:'3'},
-    r4a:  {id:'r4a',  num:4,  type:'regular', label:'4'},
-    r5a:  {id:'r5a',  num:5,  type:'regular', label:'5'},
-    r6a:  {id:'r6a',  num:6,  type:'regular', label:'6'},
-    r7a:  {id:'r7a',  num:7,  type:'regular', label:'7'},
-    r8a:  {id:'r8a',  num:8,  type:'regular', label:'8'},
-    r9a:  {id:'r9a',  num:9,  type:'regular', label:'9'},
-    r10a: {id:'r10a', num:10, type:'regular', label:'10'},
-    r11a: {id:'r11a', num:11, type:'regular', label:'11'},
-    r12a: {id:'r12a', num:12, type:'regular', label:'12'},
-    // Special spaces
-    gold1a:  {id:'gold1a',  num:5,  type:'gold',     label:'5'},
-    gold2a:  {id:'gold2a',  num:6,  type:'gold',     label:'6'},
-    gem1a:   {id:'gem1a',   num:9,  type:'gem',      label:'9'},
-    gem2a:   {id:'gem2a',   num:12, type:'gem',      label:'12'},
-    chest1a: {id:'chest1a', num:10, type:'treasure', label:'10'},
-  };
-  buildAdj(spaces, [
-    // Left cluster internal
-    ['sl9','sl7'],  ['sl9','sl12'],
-    ['sl7','sl2'],  ['sl7','sl6'],
-    ['sl12','sl2'], ['sl12','sl6'],
-    ['sl2','sl3'],  ['sl6','sl3'],
-    // Right cluster internal
-    ['sr4','sr5'],  ['sr4','sr8'],
-    ['sr5','sr10'],
-    ['sr8','sr11'], ['sr8','sr10'],
-    ['sr11','sr10'],
-    // Left cluster → regular spaces
-    ['sl2','r2a'],  ['sl2','f2a'],
-    ['sl3','r3a'],
-    ['sl6','r6a'],
-    ['sl7','r7a'],
-    ['sl9','r9a'],  ['sl9','gem1a'],
-    ['sl12','r12a'],
-    // Right cluster → regular spaces
-    ['sr4','r4a'],   ['sr4','f4a'],
-    ['sr5','r5a'],   ['sr5','gold1a'],
-    ['sr8','r8a'],   ['sr8','f8a'],
-    ['sr10','r10a'], ['sr10','chest1a'],
-    ['sr11','r11a'],
-    // Regular/fist internal adjacency
-    ['f2a','r2a'],   ['f2a','r3a'],
-    ['r2a','r3a'],
-    ['r3a','r5a'],   ['r3a','r7a'],
-    ['f4a','r4a'],   ['f4a','r5a'],
-    ['r4a','r6a'],
-    ['r5a','f6a'],   ['r5a','r7a'],   ['r5a','gold1a'],
-    ['r6a','f6a'],   ['r6a','r10a'],  ['r6a','gold2a'],
-    ['f6a','r7a'],   ['f6a','r8a'],
-    ['r8a','f8a'],   ['r8a','r10a'],
-    ['f8a','r9a'],   ['f8a','r10a'],  ['f8a','r12a'],
-    ['r9a','r11a'],  ['r9a','gem1a'],
-    ['r10a','r12a'], ['r10a','chest1a'],
-    ['r11a','f10a'], ['r11a','r12a'],
-    ['f10a','r9a'],  ['f10a','r12a'],
-    ['r12a','f12a'],
-    ['f12a','gem2a'],
-  ]);
+  const rawSpaces = [
+    // ── Start spaces ──────────────────────────────────────────────────────────
+    {id:'1',  value:2,  type:'start',   connects:['2','40']},
+    {id:'2',  value:9,  type:'start',   connects:['3','40']},
+    {id:'3',  value:6,  type:'start',   connects:['37','41','4']},
+    {id:'4',  value:7,  type:'start',   connects:['3','41','5']},
+    {id:'5',  value:3,  type:'start',   connects:['4','43','6']},
+    {id:'6',  value:12, type:'start',   connects:['5','42']},
+    {id:'7',  value:4,  type:'start',   connects:['8','52']},
+    {id:'8',  value:5,  type:'start',   connects:['7','53','9']},
+    {id:'9',  value:8,  type:'start',   connects:['8','53','10']},
+    {id:'10', value:10, type:'start',   connects:['21','9','11']},
+    {id:'11', value:11, type:'start',   connects:['10','21','12']},
+    // ── Monster rooms (IDs match space IDs in CSV) ────────────────────────────
+    {id:'12', value:null, type:'monster', connects:[]},
+    {id:'13', value:null, type:'monster', connects:[]},
+    {id:'14', value:null, type:'monster', connects:[]},
+    {id:'15', value:null, type:'monster', connects:[]},
+    {id:'16', value:null, type:'monster', connects:[]},
+    {id:'17', value:null, type:'monster', connects:[]},
+    {id:'18', value:null, type:'monster', connects:[]},
+    // ── Gem spaces ────────────────────────────────────────────────────────────
+    {id:'19', value:12, type:'gem',     connects:['46']},
+    {id:'20', value:2,  type:'gem',     connects:['28','70']},
+    {id:'21', value:2,  type:'gem',     connects:['51','10','11']},
+    {id:'22', value:12, type:'gem',     connects:['38','49']},
+    {id:'23', value:12, type:'gem',     connects:['27']},
+    {id:'24', value:2,  type:'gem',     connects:['23','27']},
+    {id:'25', value:2,  type:'gem',     connects:['31','64','36']},
+    {id:'26', value:12, type:'gem',     connects:['11','39','35']},
+    // ── Fist spaces ───────────────────────────────────────────────────────────
+    {id:'27', value:4,  type:'fist',    connects:['42','43','23','24']},
+    {id:'28', value:12, type:'fist',    connects:['20']},
+    {id:'29', value:2,  type:'fist',    connects:['57']},
+    {id:'30', value:8,  type:'fist',    connects:['59','60','17'], unlocks:'15'},
+    {id:'31', value:6,  type:'fist',    connects:['25']},
+    {id:'32', value:10, type:'fist',    connects:['12']},
+    // ── Doubles spaces (any doubles roll, no specific value) ──────────────────
+    {id:'33', value:null, type:'doubles', connects:['67','38','68']},
+    {id:'34', value:null, type:'doubles', connects:['50','51']},
+    {id:'35', value:null, type:'doubles', connects:['26','56']},
+    {id:'36', value:null, type:'doubles', connects:['25','65','63']},
+    {id:'37', value:null, type:'doubles', connects:['3','44','41']},
+    // ── Chest spaces ──────────────────────────────────────────────────────────
+    {id:'38', value:11, type:'chest',   connects:['67','33','22']},
+    {id:'39', value:3,  type:'chest',   connects:['26','54']},
+    // ── Regular spaces ────────────────────────────────────────────────────────
+    // unlocks: visiting this space unlocks the white number equal to this
+    // space's value for the specified monster
+    {id:'40', value:4,  type:'regular', connects:['1','2','12'],       unlocks:'12'},
+    {id:'41', value:10, type:'regular', connects:['3','4','37','14'],  unlocks:'14'},
+    {id:'42', value:5,  type:'regular', connects:['6','43','27']},
+    {id:'43', value:6,  type:'regular', connects:['5','42','27','14'], unlocks:'14'},
+    {id:'44', value:7,  type:'regular', connects:['12','37','45']},
+    {id:'45', value:3,  type:'regular', connects:['44','12','46'],     unlocks:'12'},
+    {id:'46', value:10, type:'regular', connects:['45','19','47']},
+    {id:'47', value:9,  type:'regular', connects:['46','49','48']},
+    {id:'48', value:6,  type:'regular', connects:['47','50','70']},
+    {id:'49', value:3,  type:'regular', connects:['22','47','15'],     unlocks:'15'},
+    {id:'50', value:11, type:'regular', connects:['48','34','15'],     unlocks:'15'},
+    {id:'51', value:7,  type:'regular', connects:['34','13','21']},
+    {id:'52', value:3,  type:'regular', connects:['7','13'],           unlocks:'13'},
+    {id:'53', value:9,  type:'regular', connects:['13','8','9'],       unlocks:'13'},
+    {id:'54', value:4,  type:'regular', connects:['39','55','15'],     unlocks:'15'},
+    {id:'55', value:7,  type:'regular', connects:['54','58','56']},
+    {id:'56', value:9,  type:'regular', connects:['35','55','57']},
+    {id:'57', value:8,  type:'regular', connects:['56','18','29']},
+    {id:'58', value:9,  type:'regular', connects:['55','59','18']},
+    {id:'59', value:10, type:'regular', connects:['58','18','60']},
+    {id:'60', value:6,  type:'regular', connects:['30','59','17']},
+    {id:'61', value:7,  type:'regular', connects:['62','17']},
+    {id:'62', value:8,  type:'regular', connects:['63','16','61'],     unlocks:'16'},
+    {id:'63', value:6,  type:'regular', connects:['62','16','36']},
+    {id:'64', value:5,  type:'regular', connects:['16','25'],          unlocks:'16'},
+    {id:'65', value:7,  type:'regular', connects:['66','36']},
+    {id:'66', value:5,  type:'regular', connects:['14','65']},
+    {id:'67', value:9,  type:'regular', connects:['14','38','33']},
+    {id:'68', value:10, type:'regular', connects:['33','69']},
+    {id:'69', value:5,  type:'regular', connects:['68','15'],          unlocks:'15'},
+    {id:'70', value:8,  type:'regular', connects:['20','13','48']},
+  ];
+
+  // Build spaces dict and undirected adjacency from connects lists
+  const spaces = {};
+  for (const s of rawSpaces) {
+    spaces[s.id] = { id:s.id, value:s.value, type:s.type, unlocks:s.unlocks||null, adj:[] };
+  }
+  for (const s of rawSpaces) {
+    for (const nbr of s.connects) {
+      if (!spaces[s.id].adj.includes(nbr)) spaces[s.id].adj.push(nbr);
+      if (spaces[nbr] && !spaces[nbr].adj.includes(s.id)) spaces[nbr].adj.push(s.id);
+    }
+  }
+
+  // Monster IDs match their monster-room space IDs.
+  // white numbers are unlocked when an adjacent space with that value is visited.
   const monsters = {
-    greyWolf:   {id:'greyWolf',   name:'Grey Wolf',    hp:3,  black:[2],    white:[10],   accessFrom:['r2a'],        unlockFrom:'r10a', gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    buffHound:  {id:'buffHound',  name:'Buff Hound',   hp:4,  black:[8,10], white:[],     accessFrom:['r8a','r10a'], unlockFrom:null,   gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    primalHare: {id:'primalHare', name:'Primal Hare',  hp:3,  black:[3],    white:[11],   accessFrom:['r3a'],        unlockFrom:'r11a', gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    savageBoar: {id:'savageBoar', name:'Savage Boar',  hp:5,  black:[9,11], white:[],     accessFrom:['r9a','r11a'], unlockFrom:null,   gemFirst:2,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    primalWolf: {id:'primalWolf', name:'Primal Wolf',  hp:4,  black:[4],    white:[6],    accessFrom:['r4a'],        unlockFrom:'r6a',  gemFirst:1,gemSub:1,lifeLoss:0,isBoss:false,isArmored:false},
-    barryBoss:  {id:'barryBoss',  name:'Barry Bearcub',hp:12, black:[7],    white:[9,11], accessFrom:['r7a','r11a'], unlockFrom:'f10a', gemFirst:5,gemSub:3,lifeLoss:0,isBoss:true, isArmored:false},
+    '12': {id:'12', name:'Purple Pup',     hp:4,  isBoss:false, isArmored:false, black:[11],   white:[3,4],        gemFirst:2, gemSub:1, lifeLoss:0},
+    '13': {id:'13', name:'Green Growler',  hp:4,  isBoss:false, isArmored:false, black:[5],    white:[3,9],        gemFirst:2, gemSub:1, lifeLoss:0},
+    '14': {id:'14', name:'Grey Hound',     hp:4,  isBoss:false, isArmored:false, black:[8],    white:[6,10],       gemFirst:2, gemSub:1, lifeLoss:0},
+    '15': {id:'15', name:'Beefy Bearpion', hp:12, isBoss:true,  isArmored:false, black:[],     white:[3,4,5,8,11], gemFirst:6, gemSub:0, lifeLoss:2},
+    '16': {id:'16', name:'White Wolf',     hp:5,  isBoss:false, isArmored:false, black:[4],    white:[5,8],        gemFirst:2, gemSub:1, lifeLoss:0},
+    '17': {id:'17', name:'Primal Hare',    hp:5,  isBoss:false, isArmored:false, black:[2,12], white:[],           gemFirst:3, gemSub:1, lifeLoss:0},
+    '18': {id:'18', name:'Punk Hare',      hp:5,  isBoss:false, isArmored:false, black:[3,11], white:[],           gemFirst:3, gemSub:1, lifeLoss:0},
   };
+
+  // SVG node positions — approximate first-pass layout, refineable once visible
   const nodes = {
-    sl9:  {x:68, y:88},   sl7:  {x:153,y:88},
-    sl12: {x:68, y:173},  sl2:  {x:153,y:173},
-    sl6:  {x:68, y:258},  sl3:  {x:153,y:258},
-    sr4:  {x:628,y:88},   sr5:  {x:713,y:88},
-    sr8:  {x:628,y:173},  sr10: {x:713,y:173},
-    sr11: {x:628,y:258},
-    f2a:  {x:238,y:45},   r2a:  {x:238,y:120},
-    r3a:  {x:323,y:80},   r7a:  {x:323,y:163},
-    gem1a:{x:238,y:265},  r9a:  {x:323,y:253},
-    r4a:  {x:238,y:358},  f4a:  {x:238,y:448},
-    r5a:  {x:408,y:120},  gold1a:{x:408,y:43},
-    f6a:  {x:408,y:218},  r6a:  {x:323,y:338},
-    gold2a:{x:238,y:428}, r8a:  {x:493,y:218},
-    r11a: {x:493,y:88},   f8a:  {x:493,y:323},
-    f10a: {x:493,y:133},  r10a: {x:578,y:323},
-    r12a: {x:578,y:418},  f12a: {x:663,y:418},
-    gem2a:{x:663,y:488},  chest1a:{x:493,y:453},
+    '1':{x:55,y:60},   '2':{x:55,y:140},  '3':{x:55,y:220},
+    '4':{x:55,y:300},  '5':{x:55,y:380},  '6':{x:120,y:450},
+    '7':{x:745,y:60},  '8':{x:745,y:150}, '9':{x:745,y:230},
+    '10':{x:660,y:150},'11':{x:660,y:60},
+    '12':{x:355,y:55}, '13':{x:610,y:215},'14':{x:235,y:180},
+    '15':{x:390,y:470},'16':{x:505,y:375},'17':{x:665,y:420},'18':{x:650,y:305},
+    '19':{x:355,y:110},'20':{x:545,y:365},'21':{x:655,y:220},
+    '22':{x:445,y:195},'23':{x:145,y:450},'24':{x:150,y:480},
+    '25':{x:355,y:455},'26':{x:600,y:155},'27':{x:200,y:405},
+    '28':{x:545,y:445},'29':{x:545,y:230},'30':{x:680,y:465},
+    '31':{x:280,y:460},'32':{x:450,y:55}, '33':{x:580,y:55},
+    '34':{x:550,y:355},'35':{x:520,y:185},'36':{x:360,y:380},
+    '37':{x:155,y:220},'38':{x:530,y:115},'39':{x:435,y:160},
+    '40':{x:155,y:90}, '41':{x:155,y:285},'42':{x:195,y:440},
+    '43':{x:155,y:370},'44':{x:255,y:85}, '45':{x:255,y:160},
+    '46':{x:355,y:175},'47':{x:355,y:255},'48':{x:450,y:330},
+    '49':{x:445,y:260},'50':{x:450,y:400},'51':{x:600,y:270},
+    '52':{x:685,y:115},'53':{x:710,y:180},'54':{x:325,y:385},
+    '55':{x:385,y:330},'56':{x:455,y:290},'57':{x:545,y:290},
+    '58':{x:515,y:340},'59':{x:570,y:375},'60':{x:625,y:395},
+    '61':{x:570,y:385},'62':{x:490,y:375},'63':{x:425,y:425},
+    '64':{x:440,y:445},'65':{x:305,y:315},'66':{x:245,y:255},
+    '67':{x:490,y:75}, '68':{x:620,y:100},'69':{x:465,y:460},
+    '70':{x:545,y:265},
   };
-  const mNodes = {
-    greyWolf:   {x:238,y:18},  primalHare: {x:323,y:28},
-    primalWolf: {x:68, y:338}, buffHound:  {x:578,y:460},
-    savageBoar: {x:493,y:38},  barryBoss:  {x:748,y:173},
-  };
+
   return {
     key:'animals', name:'Annoyed Animals', difficulty:'Novice', color:'#7a9b5c',
-    leftStarts:  ['sl2','sl3','sl6','sl7','sl9','sl12'],
-    rightStarts: ['sr4','sr5','sr8','sr10','sr11'],
-    spaces, monsters, nodes, mNodes,
-    achievements:{
-      startsLinked:{label:'Connect both clusters via visited path',done:false,gemFirst:1,gemSub:0,type:'path'},
-      fist5of6:   {label:'5 of 6 Fist spaces',count:0,threshold:5,total:6,done:false,gemFirst:3,gemSub:1,type:'count'},
+    leftStarts:  ['1','2','3','4','5','6'],
+    rightStarts: ['7','8','9','10','11'],
+    spaces, monsters, nodes,
+    achievements: {
+      startsLinked: {label:'Connect both start clusters via visited path', done:false, gemFirst:1, gemSub:0, type:'path'},
+      fist5of6:     {label:'5 of 6 Fist spaces', count:0, threshold:5, total:6, done:false, gemFirst:3, gemSub:1, type:'count'},
     },
   };
 }
@@ -218,7 +238,7 @@ function initGame(advKey) {
 function getAdv() { return ADVENTURES[state.adventure]; }
 
 function spaceNum(spaceId) {
-  return getAdv().spaces[spaceId].num;
+  return getAdv().spaces[spaceId].value;
 }
 
 function isVisited(spaceId) { return state.visitedSpaces.has(spaceId); }
@@ -231,26 +251,29 @@ function canVisitSpace(spaceId, pair) {
   const adv = getAdv();
   const sp = adv.spaces[spaceId];
 
-  if (isVisited(spaceId)) {
-    if (sp.type === 'rubble' && (state.rubbleProgress[spaceId] ?? 0) < 1) return false;
-    if (sp.type !== 'rubble') return false;
-    if ((state.rubbleProgress[spaceId] ?? 0) >= 2) return false;
+  if (isVisited(spaceId)) return false;
+  if (sp.type === 'monster') return false; // monster rooms aren't directly visited
+
+  // Doubles spaces: any doubles roll + adjacency
+  if (sp.type === 'doubles') {
+    if (pair.dice[0] !== pair.dice[1]) return false;
+    return hasAdjacentVisited(spaceId);
   }
 
-  if (sp.type === 'gateway') return false;
-  const num = spaceNum(spaceId);
+  // All other spaces need a value match
+  const num = sp.value;
   if (num === null || num !== pair.total) return false;
 
   if (sp.type === 'start') {
-    // Chosen cluster: free visit (no adjacency required)
+    // Chosen cluster: free visit, no adjacency required
     const inChosen = state.clusterChoice === 'left'
       ? adv.leftStarts.includes(spaceId)
       : adv.rightStarts.includes(spaceId);
     if (inChosen) return true;
-    // Other cluster: needs adjacency (earned by connecting through middle)
     return hasAdjacentVisited(spaceId);
   }
 
+  // Fist spaces: need matching value AND doubles
   if (sp.type === 'fist' && pair.dice[0] !== pair.dice[1]) return false;
   if (!hasAdjacentVisited(spaceId)) return false;
   return true;
@@ -261,7 +284,9 @@ function canAttackMonster(monsterId, pair) {
   const m = adv.monsters[monsterId];
   const ms = state.monsterState[monsterId];
   if (ms.defeated) return false;
-  if (!m.accessFrom.some(sid => isVisited(sid))) return false;
+  // Access: any space adjacent to the monster's room must be visited
+  const monsterRoom = adv.spaces[monsterId];
+  if (!monsterRoom.adj.some(sid => isVisited(sid))) return false;
   const validNums = [...m.black, ...m.white.filter(n => ms.unlockedWhite.has(n))];
   return validNums.includes(pair.total);
 }
@@ -281,7 +306,7 @@ function chooseCluster(side) {
   state.phase = 'roll';
   const adv = getAdv();
   const nums = (side === 'left' ? adv.leftStarts : adv.rightStarts)
-    .map(id => adv.spaces[id].num).sort((a, b) => a - b).join(', ');
+    .map(id => adv.spaces[id].value).sort((a, b) => a - b).join(', ');
   state.message = `Starting in ${side === 'left' ? 'Left' : 'Right'} cluster (${nums}). Roll the dice!`;
   render();
 }
@@ -354,7 +379,7 @@ function assignToSpace(spaceId) {
   } else {
     state.visitedSpaces.add(spaceId);
     triggerSpaceEffects(spaceId);
-    const effect = sp.type === 'gold' ? ' — +1 Gold!' : sp.type === 'gem' ? ' — +1 Gem!' : sp.type === 'fist' ? ' — dealt 1 damage to all monsters!' : '';
+    const effect = sp.type === 'gem' ? ' — +1 Gem!' : sp.type === 'fist' ? ' — dealt 1 damage to all monsters!' : sp.type === 'chest' ? ' — opening chest...' : '';
     state.message = `Visited ${spaceOptionLabel(spaceId)}${effect}`;
   }
 
@@ -366,15 +391,13 @@ function triggerSpaceEffects(spaceId) {
   const adv = getAdv();
   const sp = adv.spaces[spaceId];
 
-  if (sp.type === 'gold')     state.gold++;
-  if (sp.type === 'gem')      state.gems++;
-  if (sp.type === 'treasure') state.pendingChest = spaceId;
+  if (sp.type === 'gem')   state.gems++;
+  if (sp.type === 'chest') state.pendingChest = spaceId;
 
-  // Unlock white numbers for monsters whose unlockFrom = this space
-  for (const [mid, m] of Object.entries(adv.monsters)) {
-    if (m.unlockFrom === spaceId) {
-      for (const n of m.white) state.monsterState[mid].unlockedWhite.add(n);
-    }
+  // Unlock a specific white number for a monster (the unlocked number = this space's value)
+  if (sp.unlocks) {
+    const ms = state.monsterState[sp.unlocks];
+    if (ms) ms.unlockedWhite.add(sp.value);
   }
 
   // Fist spaces: deal 1 damage to all active monsters
@@ -686,7 +709,7 @@ function renderMonsterPanel() {
   const items = Object.values(adv.monsters).map(m => {
     const ms = state.monsterState[m.id];
     if (ms.defeated) return `<div class="monster-item defeated">&#x2713; ${m.name}</div>`;
-    const hasAccess = m.accessFrom.some(sid => isVisited(sid));
+    const hasAccess = adv.spaces[m.id].adj.some(sid => isVisited(sid));
     const pct = (ms.health / m.hp) * 100;
     const attackableNow = activePair && canAttackMonster(m.id, activePair);
     const whiteNums = m.white.map(n =>
@@ -724,18 +747,17 @@ function spaceOptionLabel(spaceId) {
   const sp = adv.spaces[spaceId];
   if (sp.type === 'start') {
     const cluster = adv.leftStarts.includes(spaceId) ? 'Left' : 'Right';
-    return `${cluster} start: ${sp.num}`;
+    return `${cluster} start: ${sp.value}`;
   }
+  if (sp.type === 'doubles') return '✊✊ Doubles space (any matching pair)';
   const info = {
     fist:    { icon: '✊', name: 'Fist',  note: 'damages all monsters' },
     gem:     { icon: '💎', name: 'Gem',   note: '+1 gem' },
-    gold:    { icon: '🪙', name: 'Gold',  note: '+1 gold' },
-    treasure:{ icon: '📦', name: 'Chest', note: 'choose a reward' },
+    chest:   { icon: '📦', name: 'Chest', note: 'choose a reward' },
     regular: { icon: '',   name: '',      note: '' },
-    rubble:  { icon: '🪨', name: 'Rubble',note: '2 crosses to clear' },
   };
   const t = info[sp.type] || { icon: '', name: sp.type, note: '' };
-  const parts = [t.icon, t.name || '', sp.num, t.note ? `— ${t.note}` : ''].filter(x => x !== '');
+  const parts = [t.icon, t.name || '', sp.value, t.note ? `— ${t.note}` : ''].filter(x => x !== '' && x !== null && x !== undefined);
   return parts.join(' ');
 }
 
@@ -839,8 +861,8 @@ function renderPhaseUI() {
 
 function renderClusterSelect() {
   const adv = getAdv();
-  const leftNums  = adv.leftStarts.map(id  => adv.spaces[id].num).sort((a, b) => a - b).join(', ');
-  const rightNums = adv.rightStarts.map(id => adv.spaces[id].num).sort((a, b) => a - b).join(', ');
+  const leftNums  = adv.leftStarts.map(id  => adv.spaces[id].value).sort((a, b) => a - b).join(', ');
+  const rightNums = adv.rightStarts.map(id => adv.spaces[id].value).sort((a, b) => a - b).join(', ');
   return `<div class="cluster-select">
     <h3>Choose your starting cluster</h3>
     <p class="cluster-hint">Start spaces in your chosen cluster can be visited with a matching roll — no adjacency required. You can reach the other cluster later by connecting through the middle.</p>
@@ -902,15 +924,15 @@ function renderSVGMap() {
   const W = 780, H = 510;
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="dungeon-map">`;
 
-  // Edges
+  // Regular edges (skip connections to monster rooms — those rendered as dashed access lines)
   const drawnEdges = new Set();
   for (const [id, sp] of Object.entries(adv.spaces)) {
-    if (sp.type === 'gateway') continue;
+    if (sp.type === 'monster') continue;
     const nA = adv.nodes[id];
     if (!nA) continue;
     for (const nbrId of sp.adj) {
       const nbrSp = adv.spaces[nbrId];
-      if (!nbrSp || nbrSp.type === 'gateway') continue;
+      if (!nbrSp || nbrSp.type === 'monster') continue;
       const edgeKey = [id, nbrId].sort().join('|');
       if (drawnEdges.has(edgeKey)) continue;
       drawnEdges.add(edgeKey);
@@ -921,24 +943,20 @@ function renderSVGMap() {
     }
   }
 
-  // Monster access lines
-  for (const m of Object.values(adv.monsters)) {
-    const mn = adv.mNodes[m.id];
+  // Monster rooms: dashed access lines from adjacent spaces + monster node rectangles
+  for (const [mid, m] of Object.entries(adv.monsters)) {
+    const mn = adv.nodes[mid];
     if (!mn) continue;
-    for (const sid of m.accessFrom) {
+    const ms = state.monsterState[mid];
+    const monsterRoom = adv.spaces[mid];
+    const hasAccess = monsterRoom.adj.some(sid => isVisited(sid));
+
+    for (const sid of monsterRoom.adj) {
       const sn = adv.nodes[sid];
       if (!sn) continue;
-      const ms = state.monsterState[m.id];
       svg += `<line x1="${sn.x}" y1="${sn.y}" x2="${mn.x}" y2="${mn.y}" class="monster-access-line ${ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : ''}" />`;
     }
-  }
 
-  // Monster nodes
-  for (const m of Object.values(adv.monsters)) {
-    const mn = adv.mNodes[m.id];
-    if (!mn) continue;
-    const ms = state.monsterState[m.id];
-    const hasAccess = m.accessFrom.some(sid => isVisited(sid));
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
     const pct = ms.health / m.hp;
     svg += `<rect x="${mn.x-22}" y="${mn.y-14}" width="44" height="28" rx="4" class="${cls}" />`;
@@ -949,46 +967,37 @@ function renderSVGMap() {
     svg += `<text x="${mn.x}" y="${mn.y-2}" class="monster-label">${ms.defeated ? '✓' : m.name.split(' ')[0]}</text>`;
   }
 
-  // Space nodes (map is read-only reference — no click handlers)
+  // Space nodes (read-only — monster rooms skipped, rendered above)
   for (const [id, sp] of Object.entries(adv.spaces)) {
-    if (sp.type === 'gateway') continue;
+    if (sp.type === 'monster') continue;
     const n = adv.nodes[id];
     if (!n) continue;
     const vis = isVisited(id);
     const highlighted = highlightSet.has(id);
-    const rubbleProg = sp.type === 'rubble' ? (state.rubbleProgress[id] ?? 0) : -1;
-    const isPartialRubble = rubbleProg === 1;
 
     let cls = 'space-node';
     if (sp.type === 'start')    cls += ' start-node';
     else if (sp.type === 'fist')    cls += ' fist-node';
-    else if (sp.type === 'gold')    cls += ' gold-node';
     else if (sp.type === 'gem')     cls += ' gem-node';
-    else if (sp.type === 'treasure')cls += ' chest-node';
-    else if (sp.type === 'rubble')  cls += ' rubble-node';
+    else if (sp.type === 'chest')   cls += ' chest-node';
+    else if (sp.type === 'doubles') cls += ' doubles-node';
 
-    if (vis)            cls += ' visited';
-    if (isPartialRubble) cls += ' partial';
-    if (highlighted)    cls += ' available';
+    if (vis)         cls += ' visited';
+    if (highlighted) cls += ' available';
 
-    const r = sp.type === 'start' ? 16 : 14;
-
-    // Indicate chosen cluster start spaces differently
-    let extraAttr = '';
-    if (sp.type === 'start' && state.clusterChoice) {
+    if (sp.type === 'start' && state.clusterChoice && !vis) {
       const inChosen = state.clusterChoice === 'left'
         ? adv.leftStarts.includes(id)
         : adv.rightStarts.includes(id);
-      if (!inChosen && !vis) cls += ' other-cluster';
+      if (!inChosen) cls += ' other-cluster';
     }
 
+    const r = sp.type === 'start' ? 16 : 14;
     svg += `<circle cx="${n.x}" cy="${n.y}" r="${r}" class="${cls}" />`;
 
-    let lbl = sp.label;
-    if (sp.type === 'fist') lbl = lbl + '✊';
-    if (isPartialRubble) lbl = '½';
+    let lbl = sp.value !== null ? String(sp.value) : '✊✊';
+    if (sp.type === 'fist') lbl = sp.value + '✊';
     if (vis && sp.type !== 'start' && sp.type !== 'fist') lbl = '✓';
-
     svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${lbl}</text>`;
   }
 

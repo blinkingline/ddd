@@ -818,6 +818,7 @@ body, html {
 
 /* ── Map: other-cluster start nodes ── */
 .space-node.other-cluster { opacity: 0.3; }
+.space-node.doubles-node  { fill: #2a2a3a; stroke: #9b59b6; stroke-width: 2; }
 
 /* ── Pair box: black die used ── */
 .pair-box.black-used { border-color: #f1c40f; color: #f1c40f; }
