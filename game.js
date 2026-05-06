@@ -25,50 +25,73 @@ function pairSplits(w) {
 // their graph neighbours (spring attraction) until the layout settles.
 
 function forceLayout(spaces, nodes) {
-  const pos = {};
-  const W = 740, H = 485, PAD = 38;
+  const W = 740, H = 485, PAD = 42;
 
-  // Initialise from hand-placed coordinates
-  for (const [id, sp] of Object.entries(spaces)) {
-    if (sp.type === 'monster') continue;
-    pos[id] = { x: nodes[id].x, y: nodes[id].y };
-  }
+  // Radius per node type
+  const START_IDS = new Set(['1','2','3','4','5','6','7','8','9','10','11']);
+  const rOf = id => START_IDS.has(id) ? 16 : 14;
 
-  // Pinned start spaces (fixed)
+  // Pinned positions for start spaces
   const PINS = {
     '1':{x:50,y:48},  '2':{x:50,y:116}, '3':{x:50,y:188},
     '4':{x:50,y:258}, '5':{x:50,y:330}, '6':{x:50,y:400},
     '7':{x:730,y:48}, '8':{x:730,y:130},'9':{x:730,y:215},
     '10':{x:730,y:296},'11':{x:730,y:376},
   };
+
+  // Monster room positions as fixed attractors — derived from hand-placed nodes
+  const MPOS = {};
+  for (const [id, sp] of Object.entries(spaces)) {
+    if (sp.type === 'monster') MPOS[id] = { x: nodes[id].x, y: nodes[id].y };
+  }
+
+  // Initialise mutable positions for non-monster spaces
+  const pos = {};
+  for (const [id, sp] of Object.entries(spaces)) {
+    if (sp.type === 'monster') continue;
+    pos[id] = { x: nodes[id].x, y: nodes[id].y };
+  }
   Object.assign(pos, PINS);
 
-  // Fixed attractor positions for monster rooms (not rendered by force layout)
-  const MPOS = {
-    '12':{x:258,y:62}, '13':{x:660,y:196},'14':{x:198,y:238},
-    '15':{x:412,y:392},'16':{x:500,y:460},'17':{x:678,y:448},'18':{x:662,y:328},
-  };
-
   const ids = Object.keys(pos);
-  const KR = 5500, KA = 0.07, IDEAL = 76;
 
-  for (let t = 0; t < 900; t++) {
+  // Precompute adjacency sets and edge list (non-redundant)
+  const adjOf = {};
+  const edgeList = [];
+  const edgeSeen = new Set();
+  for (const [id, sp] of Object.entries(spaces)) {
+    if (!pos[id]) continue;
+    adjOf[id] = new Set(sp.adj);
+    for (const nbr of sp.adj) {
+      const key = [id, nbr].sort().join('|');
+      if (!edgeSeen.has(key)) { edgeSeen.add(key); edgeList.push([id, nbr]); }
+    }
+  }
+
+  function clamp(id) {
+    pos[id].x = Math.max(PAD, Math.min(W, pos[id].x));
+    pos[id].y = Math.max(PAD, Math.min(H, pos[id].y));
+  }
+
+  // ── Phase 1: spring simulation ─────────────────────────────────────────────
+  for (let t = 0; t < 600; t++) {
     const fx = {}, fy = {};
     for (const id of ids) { fx[id] = 0; fy[id] = 0; }
 
-    // Repulsion between every node pair
+    // Node–node repulsion (boosted when overlapping)
     for (let i = 0; i < ids.length; i++) {
       for (let j = i + 1; j < ids.length; j++) {
         const a = ids[i], b = ids[j];
         const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
         const d2 = dx*dx + dy*dy || 0.01, d = Math.sqrt(d2);
-        const f = KR / d2;
+        const minD = rOf(a) + rOf(b);
+        const f = d < minD ? 28000/d2 : 5500/d2;
         fx[a] -= f*dx/d; fy[a] -= f*dy/d;
         fx[b] += f*dx/d; fy[b] += f*dy/d;
       }
     }
 
-    // Spring attraction along graph edges (including edges to monster rooms)
+    // Edge spring attraction (ideal length 78px)
     for (const [id, sp] of Object.entries(spaces)) {
       if (!pos[id]) continue;
       for (const nbr of sp.adj) {
@@ -76,18 +99,93 @@ function forceLayout(spaces, nodes) {
         if (!np) continue;
         const dx = np.x - pos[id].x, dy = np.y - pos[id].y;
         const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
-        const f = KA * (d - IDEAL);
+        const f = 0.055 * (d - 78);
         if (!PINS[id]) { fx[id] += f*dx/d; fy[id] += f*dy/d; }
       }
     }
 
-    // Apply with linear cooling schedule
-    const cool = Math.max(0.08, 1 - t / 800);
+    const cool = Math.max(0.06, 1 - t / 560);
     for (const id of ids) {
       if (PINS[id]) { pos[id] = { ...PINS[id] }; continue; }
-      pos[id].x = Math.max(PAD, Math.min(W, pos[id].x + fx[id] * cool));
-      pos[id].y = Math.max(PAD, Math.min(H, pos[id].y + fy[id] * cool));
+      pos[id].x += fx[id] * cool;
+      pos[id].y += fy[id] * cool;
+      clamp(id);
     }
+  }
+
+  // ── Phase 2: hard node–node separation (guaranteed no overlap) ─────────────
+  for (let pass = 0; pass < 200; pass++) {
+    let any = false;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = ids[i], b = ids[j];
+        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
+        const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
+        const minD = rOf(a) + rOf(b) + 2;
+        if (d < minD) {
+          any = true;
+          const push = (minD - d) / 2 + 0.5;
+          const ux = dx/d, uy = dy/d;
+          if (!PINS[a]) { pos[a].x -= ux*push; pos[a].y -= uy*push; clamp(a); }
+          if (!PINS[b]) { pos[b].x += ux*push; pos[b].y += uy*push; clamp(b); }
+        }
+      }
+    }
+    if (!any) break;
+  }
+
+  // ── Phase 3: push nodes off non-adjacent edges ─────────────────────────────
+  for (let pass = 0; pass < 40; pass++) {
+    let any = false;
+    for (const id of ids) {
+      if (PINS[id]) continue;
+      const px = pos[id].x, py = pos[id].y;
+      const aset = adjOf[id];
+      for (const [ea, eb] of edgeList) {
+        if (ea === id || eb === id || aset.has(ea) || aset.has(eb)) continue;
+        const epA = pos[ea] || MPOS[ea], epB = pos[eb] || MPOS[eb];
+        if (!epA || !epB) continue;
+        // Bounding-box fast reject
+        if (px < Math.min(epA.x, epB.x) - 20 || px > Math.max(epA.x, epB.x) + 20 ||
+            py < Math.min(epA.y, epB.y) - 20 || py > Math.max(epA.y, epB.y) + 20) continue;
+        // Point-to-segment distance
+        const abx = epB.x-epA.x, aby = epB.y-epA.y, ab2 = abx*abx+aby*aby || 0.01;
+        const tv = Math.max(0, Math.min(1, ((px-epA.x)*abx + (py-epA.y)*aby) / ab2));
+        const ex = epA.x + tv*abx, ey = epA.y + tv*aby;
+        const ddx = px - ex, ddy = py - ey;
+        const dist = Math.sqrt(ddx*ddx + ddy*ddy) || 0.1;
+        const clearance = rOf(id) + 4;
+        if (dist < clearance) {
+          any = true;
+          const push = clearance - dist + 1;
+          pos[id].x += push * ddx/dist;
+          pos[id].y += push * ddy/dist;
+          clamp(id);
+        }
+      }
+    }
+    if (!any) break;
+  }
+
+  // ── Phase 4: final hard separation after phase-3 moves ────────────────────
+  for (let pass = 0; pass < 100; pass++) {
+    let any = false;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = ids[i], b = ids[j];
+        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
+        const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
+        const minD = rOf(a) + rOf(b) + 2;
+        if (d < minD) {
+          any = true;
+          const push = (minD - d) / 2 + 0.5;
+          const ux = dx/d, uy = dy/d;
+          if (!PINS[a]) { pos[a].x -= ux*push; pos[a].y -= uy*push; clamp(a); }
+          if (!PINS[b]) { pos[b].x += ux*push; pos[b].y += uy*push; clamp(b); }
+        }
+      }
+    }
+    if (!any) break;
   }
 
   const result = {};
