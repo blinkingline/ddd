@@ -1164,29 +1164,54 @@ function renderSVGMap() {
     }
     return score;
   }
-  // Generate candidate polylines: straight, two L-shapes, six Z-shapes, six perp offsets
+  // Generate candidate polylines for routing between A and B.
+  // Includes straight, L-shapes, Z-shapes, perp offsets, and — critically —
+  // border-hugging routes that go around the map perimeter so that long
+  // cross-map edges (e.g. 6→7, 11→12) don't cut through the interior.
   function getCandidates(ax, ay, bx, by) {
+    // Border waypoints just outside the node area (canvas 780×530, nodes ≈50–730 x, 50–490 y)
+    const T=10, B=525, L=10, R=770;
     const mx=(ax+bx)/2, my=(ay+by)/2;
     const dx=bx-ax, dy=by-ay, len=Math.hypot(dx,dy)||1;
-    const nx=-dy/len, ny=dx/len; // unit perp
+    const nx=-dy/len, ny=dx/len;
     const m3x=ax+(bx-ax)/3, m3x2=ax+2*(bx-ax)/3;
     const m3y=ay+(by-ay)/3, m3y2=ay+2*(by-ay)/3;
-    const cands = [
-      [[ax,ay],[bx,by]],                                  // straight
-      [[ax,ay],[bx,ay],[bx,by]],                          // L horiz-first
-      [[ax,ay],[ax,by],[bx,by]],                          // L vert-first
-      [[ax,ay],[mx,ay],[mx,by],[bx,by]],                  // Z at mid-x
-      [[ax,ay],[m3x,ay],[m3x,by],[bx,by]],                // Z at 1/3 x
-      [[ax,ay],[m3x2,ay],[m3x2,by],[bx,by]],              // Z at 2/3 x
-      [[ax,ay],[ax,my],[bx,my],[bx,by]],                  // Z at mid-y
-      [[ax,ay],[ax,m3y],[bx,m3y],[bx,by]],                // Z at 1/3 y
-      [[ax,ay],[ax,m3y2],[bx,m3y2],[bx,by]],              // Z at 2/3 y
+    return [
+      // Straight
+      [[ax,ay],[bx,by]],
+      // L-shapes
+      [[ax,ay],[bx,ay],[bx,by]],
+      [[ax,ay],[ax,by],[bx,by]],
+      // Z-shapes along x
+      [[ax,ay],[mx,ay],[mx,by],[bx,by]],
+      [[ax,ay],[m3x,ay],[m3x,by],[bx,by]],
+      [[ax,ay],[m3x2,ay],[m3x2,by],[bx,by]],
+      // Z-shapes along y
+      [[ax,ay],[ax,my],[bx,my],[bx,by]],
+      [[ax,ay],[ax,m3y],[bx,m3y],[bx,by]],
+      [[ax,ay],[ax,m3y2],[bx,m3y2],[bx,by]],
+      // Perp offsets
+      [[ax,ay],[mx+nx*35,my+ny*35],[bx,by]],
+      [[ax,ay],[mx-nx*35,my-ny*35],[bx,by]],
+      [[ax,ay],[mx+nx*70,my+ny*70],[bx,by]],
+      [[ax,ay],[mx-nx*70,my-ny*70],[bx,by]],
+      [[ax,ay],[mx+nx*110,my+ny*110],[bx,by]],
+      [[ax,ay],[mx-nx*110,my-ny*110],[bx,by]],
+      // ── Border routes — hug a single map edge ─────────────────────────────
+      [[ax,ay],[ax,T],[bx,T],[bx,by]],       // via top
+      [[ax,ay],[ax,B],[bx,B],[bx,by]],       // via bottom
+      [[ax,ay],[L,ay],[L,by],[bx,by]],       // via left
+      [[ax,ay],[R,ay],[R,by],[bx,by]],       // via right
+      // ── Corner routes — hug two edges (critical for 6↔7 and 11↔12) ───────
+      [[ax,ay],[R,ay],[R,T],[bx,T],[bx,by]], // right then top
+      [[ax,ay],[R,ay],[R,B],[bx,B],[bx,by]], // right then bottom
+      [[ax,ay],[L,ay],[L,T],[bx,T],[bx,by]], // left then top
+      [[ax,ay],[L,ay],[L,B],[bx,B],[bx,by]], // left then bottom
+      [[ax,ay],[ax,T],[R,T],[R,by],[bx,by]], // top then right
+      [[ax,ay],[ax,B],[R,B],[R,by],[bx,by]], // bottom then right
+      [[ax,ay],[ax,T],[L,T],[L,by],[bx,by]], // top then left
+      [[ax,ay],[ax,B],[L,B],[L,by],[bx,by]], // bottom then left
     ];
-    for (const r of [35, 70, 110]) {
-      cands.push([[ax,ay],[mx+nx*r,my+ny*r],[bx,by]]);
-      cands.push([[ax,ay],[mx-nx*r,my-ny*r],[bx,by]]);
-    }
-    return cands;
   }
   // Build SVG path d-string from waypoints, clipping endpoints to circle radii
   function buildPath(pts, ra, rb) {
@@ -1228,15 +1253,24 @@ function renderSVGMap() {
   }
   edgesToRoute.sort((a, b) => b.len - a.len); // longest first
 
-  // Route each edge, accumulating committed segments as crossing obstacles
-  const routedSegs = []; // flat [x1,y1,x2,y2] tuples
+  // Route each edge, accumulating committed segments as crossing obstacles.
+  // Score = crossings×500 + node-proximity + route-length×0.01 (slight length preference).
+  const routedSegs = [];
   for (const e of edgesToRoute) {
     const obs = allObs.filter(o => o.id !== e.id && o.id !== e.nbrId);
     const candidates = getCandidates(e.nA.x, e.nA.y, e.nB.x, e.nB.y);
     let best = candidates[0], bestScore = Infinity;
     for (const c of candidates) {
-      const s = scoreCandidate(c, obs, routedSegs);
-      if (s < bestScore) { bestScore = s; best = c; }
+      let score = 0, rlen = 0;
+      for (let i=0; i<c.length-1; i++) {
+        const [ax,ay]=c[i], [bx,by]=c[i+1];
+        rlen += Math.hypot(bx-ax, by-ay);
+        for (const o of obs) { const d=segDist(o.x,o.y,ax,ay,bx,by); if(d<o.r) score+=o.r-d; }
+        for (const [cx,cy,dx,dy] of routedSegs)
+          if (segsIntersect(ax,ay,bx,by,cx,cy,dx,dy)) score += 500;
+      }
+      score += rlen * 0.01;
+      if (score < bestScore) { bestScore = score; best = c; }
     }
     for (let i=0; i<best.length-1; i++)
       routedSegs.push([best[i][0], best[i][1], best[i+1][0], best[i+1][1]]);
