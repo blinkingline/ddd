@@ -1128,13 +1128,64 @@ function renderSVGMap() {
   const W = 780, H = 530;
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="dungeon-map">`;
 
-  // Helper: clip a line between two circles so it starts/ends at the circle edge
+  // Helper: clip a straight line between two circles
   function edgePts(ax, ay, ar, bx, by, br) {
     const dx = bx - ax, dy = by - ay;
     const len = Math.sqrt(dx*dx + dy*dy) || 1;
     const ux = dx/len, uy = dy/len;
     return { x1: ax + ux*ar, y1: ay + uy*ar, x2: bx - ux*br, y2: by - uy*br };
   }
+
+  // ── Edge auto-router ────────────────────────────────────────────────────────
+  // Perpendicular distance from point to segment
+  function segDist(px, py, ax, ay, bx, by) {
+    const dx = bx-ax, dy = by-ay, len2 = dx*dx+dy*dy;
+    if (len2 < 0.01) return Math.hypot(px-ax, py-ay);
+    const t = Math.max(0, Math.min(1, ((px-ax)*dx+(py-ay)*dy)/len2));
+    return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
+  }
+  // Total penalty for a polyline path against an array of {x,y,r} obstacles
+  function pathPenalty(pts, obs) {
+    let p = 0;
+    for (let i = 0; i < pts.length-1; i++) {
+      const [ax,ay]=pts[i], [bx,by]=pts[i+1];
+      for (const o of obs) { const d=segDist(o.x,o.y,ax,ay,bx,by); if(d<o.r) p+=o.r-d; }
+    }
+    return p;
+  }
+  // Build SVG path d-string from waypoints, clipping endpoints to their circle radii
+  function buildPath(pts, ra, rb) {
+    const [ax,ay]=pts[0], [nx,ny]=pts[1];
+    const d1=Math.hypot(nx-ax,ny-ay)||1;
+    const [bx,by]=pts[pts.length-1], [px2,py2]=pts[pts.length-2];
+    const d2=Math.hypot(px2-bx,py2-by)||1;
+    let d=`M ${(ax+(nx-ax)/d1*ra).toFixed(1)},${(ay+(ny-ay)/d1*ra).toFixed(1)}`;
+    for (let i=1;i<pts.length-1;i++) d+=` L ${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
+    d+=` L ${(bx+(px2-bx)/d2*rb).toFixed(1)},${(by+(py2-by)/d2*rb).toFixed(1)}`;
+    return d;
+  }
+  // Pick the route (straight, horiz-first elbow, vert-first elbow, or perp offsets)
+  // with the lowest penalty against obstacle nodes
+  function routeEdge(ax, ay, bx, by, obs) {
+    const mx=(ax+bx)/2, my=(ay+by)/2;
+    const dx=bx-ax, dy=by-ay, len=Math.hypot(dx,dy)||1;
+    const px=-dy/len*50, py=dx/len*50;
+    const options = [
+      [[ax,ay],[bx,by]],
+      [[ax,ay],[bx,ay],[bx,by]],
+      [[ax,ay],[ax,by],[bx,by]],
+      [[ax,ay],[mx+px,my+py],[bx,by]],
+      [[ax,ay],[mx-px,my-py],[bx,by]],
+    ];
+    return options.reduce((best,cur) =>
+      pathPenalty(cur,obs) < pathPenalty(best,obs) ? cur : best
+    );
+  }
+
+  // Pre-build obstacle list: all non-monster nodes as circles (slightly padded)
+  const allObs = Object.entries(adv.nodes)
+    .filter(([nid]) => adv.spaces[nid] && adv.spaces[nid].type !== 'monster')
+    .map(([nid, n]) => ({ id: nid, x: n.x, y: n.y, r: adv.spaces[nid].type === 'start' ? 18 : 16 }));
 
   // Regular edges (skip connections to monster rooms — those rendered as dashed access lines)
   const drawnEdges = new Set();
@@ -1153,8 +1204,10 @@ function renderSVGMap() {
       if (!nB) continue;
       const rB = nbrSp.type === 'start' ? 16 : 14;
       const bothVisited = isVisited(id) && isVisited(nbrId);
-      const p = edgePts(nA.x, nA.y, rA, nB.x, nB.y, rB);
-      svg += `<line x1="${p.x1.toFixed(1)}" y1="${p.y1.toFixed(1)}" x2="${p.x2.toFixed(1)}" y2="${p.y2.toFixed(1)}" class="map-edge ${bothVisited ? 'visited' : ''}" />`;
+      const obs = allObs.filter(o => o.id !== id && o.id !== nbrId);
+      const pts = routeEdge(nA.x, nA.y, nB.x, nB.y, obs);
+      const d = buildPath(pts, rA, rB);
+      svg += `<path d="${d}" class="map-edge ${bothVisited ? 'visited' : ''}" />`;
     }
   }
 
