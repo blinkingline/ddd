@@ -1137,78 +1137,111 @@ function renderSVGMap() {
   }
 
   // ── Edge auto-router ────────────────────────────────────────────────────────
-  // Perpendicular distance from point to segment
+  // Point-to-segment perpendicular distance
   function segDist(px, py, ax, ay, bx, by) {
-    const dx = bx-ax, dy = by-ay, len2 = dx*dx+dy*dy;
+    const dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy;
     if (len2 < 0.01) return Math.hypot(px-ax, py-ay);
-    const t = Math.max(0, Math.min(1, ((px-ax)*dx+(py-ay)*dy)/len2));
+    const t=Math.max(0, Math.min(1, ((px-ax)*dx+(py-ay)*dy)/len2));
     return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
   }
-  // Total penalty for a polyline path against an array of {x,y,r} obstacles
-  function pathPenalty(pts, obs) {
-    let p = 0;
-    for (let i = 0; i < pts.length-1; i++) {
-      const [ax,ay]=pts[i], [bx,by]=pts[i+1];
-      for (const o of obs) { const d=segDist(o.x,o.y,ax,ay,bx,by); if(d<o.r) p+=o.r-d; }
-    }
-    return p;
+  // Do two segments properly cross (ignoring endpoint touches)?
+  function segsIntersect(ax, ay, bx, by, cx, cy, dx, dy) {
+    const d1x=bx-ax, d1y=by-ay, d2x=dx-cx, d2y=dy-cy;
+    const cross=d1x*d2y - d1y*d2x;
+    if (Math.abs(cross) < 1e-9) return false;
+    const t=((cx-ax)*d2y - (cy-ay)*d2x) / cross;
+    const u=((cx-ax)*d1y - (cy-ay)*d1x) / cross;
+    return t>0.05 && t<0.95 && u>0.05 && u<0.95;
   }
-  // Build SVG path d-string from waypoints, clipping endpoints to their circle radii
+  // Score a candidate polyline: node-proximity penalty + heavy crossing penalty
+  function scoreCandidate(pts, obs, routedSegs) {
+    let score = 0;
+    for (let i=0; i<pts.length-1; i++) {
+      const [ax,ay]=pts[i], [bx,by]=pts[i+1];
+      for (const o of obs) { const d=segDist(o.x,o.y,ax,ay,bx,by); if(d<o.r) score+=o.r-d; }
+      for (const [cx,cy,dx,dy] of routedSegs)
+        if (segsIntersect(ax,ay,bx,by,cx,cy,dx,dy)) score += 500;
+    }
+    return score;
+  }
+  // Generate candidate polylines: straight, two L-shapes, six Z-shapes, six perp offsets
+  function getCandidates(ax, ay, bx, by) {
+    const mx=(ax+bx)/2, my=(ay+by)/2;
+    const dx=bx-ax, dy=by-ay, len=Math.hypot(dx,dy)||1;
+    const nx=-dy/len, ny=dx/len; // unit perp
+    const m3x=ax+(bx-ax)/3, m3x2=ax+2*(bx-ax)/3;
+    const m3y=ay+(by-ay)/3, m3y2=ay+2*(by-ay)/3;
+    const cands = [
+      [[ax,ay],[bx,by]],                                  // straight
+      [[ax,ay],[bx,ay],[bx,by]],                          // L horiz-first
+      [[ax,ay],[ax,by],[bx,by]],                          // L vert-first
+      [[ax,ay],[mx,ay],[mx,by],[bx,by]],                  // Z at mid-x
+      [[ax,ay],[m3x,ay],[m3x,by],[bx,by]],                // Z at 1/3 x
+      [[ax,ay],[m3x2,ay],[m3x2,by],[bx,by]],              // Z at 2/3 x
+      [[ax,ay],[ax,my],[bx,my],[bx,by]],                  // Z at mid-y
+      [[ax,ay],[ax,m3y],[bx,m3y],[bx,by]],                // Z at 1/3 y
+      [[ax,ay],[ax,m3y2],[bx,m3y2],[bx,by]],              // Z at 2/3 y
+    ];
+    for (const r of [35, 70, 110]) {
+      cands.push([[ax,ay],[mx+nx*r,my+ny*r],[bx,by]]);
+      cands.push([[ax,ay],[mx-nx*r,my-ny*r],[bx,by]]);
+    }
+    return cands;
+  }
+  // Build SVG path d-string from waypoints, clipping endpoints to circle radii
   function buildPath(pts, ra, rb) {
     const [ax,ay]=pts[0], [nx,ny]=pts[1];
-    const d1=Math.hypot(nx-ax,ny-ay)||1;
+    const d1=Math.hypot(nx-ax, ny-ay)||1;
     const [bx,by]=pts[pts.length-1], [px2,py2]=pts[pts.length-2];
-    const d2=Math.hypot(px2-bx,py2-by)||1;
+    const d2=Math.hypot(px2-bx, py2-by)||1;
     let d=`M ${(ax+(nx-ax)/d1*ra).toFixed(1)},${(ay+(ny-ay)/d1*ra).toFixed(1)}`;
-    for (let i=1;i<pts.length-1;i++) d+=` L ${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
+    for (let i=1; i<pts.length-1; i++) d+=` L ${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
     d+=` L ${(bx+(px2-bx)/d2*rb).toFixed(1)},${(by+(py2-by)/d2*rb).toFixed(1)}`;
     return d;
   }
-  // Pick the route (straight, horiz-first elbow, vert-first elbow, or perp offsets)
-  // with the lowest penalty against obstacle nodes
-  function routeEdge(ax, ay, bx, by, obs) {
-    const mx=(ax+bx)/2, my=(ay+by)/2;
-    const dx=bx-ax, dy=by-ay, len=Math.hypot(dx,dy)||1;
-    const px=-dy/len*50, py=dx/len*50;
-    const options = [
-      [[ax,ay],[bx,by]],
-      [[ax,ay],[bx,ay],[bx,by]],
-      [[ax,ay],[ax,by],[bx,by]],
-      [[ax,ay],[mx+px,my+py],[bx,by]],
-      [[ax,ay],[mx-px,my-py],[bx,by]],
-    ];
-    return options.reduce((best,cur) =>
-      pathPenalty(cur,obs) < pathPenalty(best,obs) ? cur : best
-    );
-  }
 
-  // Pre-build obstacle list: all non-monster nodes as circles (slightly padded)
+  // Obstacle nodes (non-monster circles, slightly padded)
   const allObs = Object.entries(adv.nodes)
-    .filter(([nid]) => adv.spaces[nid] && adv.spaces[nid].type !== 'monster')
+    .filter(([nid]) => adv.spaces[nid]?.type !== 'monster')
     .map(([nid, n]) => ({ id: nid, x: n.x, y: n.y, r: adv.spaces[nid].type === 'start' ? 18 : 16 }));
 
-  // Regular edges (skip connections to monster rooms — those rendered as dashed access lines)
+  // Collect all non-monster edges (deduplicated), sort longest-first so long
+  // cross-map edges claim border corridors before short local edges fill in
   const drawnEdges = new Set();
+  const edgesToRoute = [];
   for (const [id, sp] of Object.entries(adv.spaces)) {
     if (sp.type === 'monster') continue;
-    const nA = adv.nodes[id];
-    if (!nA) continue;
-    const rA = adv.spaces[id].type === 'start' ? 16 : 14;
+    const nA = adv.nodes[id]; if (!nA) continue;
+    const rA = sp.type === 'start' ? 16 : 14;
     for (const nbrId of sp.adj) {
       const nbrSp = adv.spaces[nbrId];
       if (!nbrSp || nbrSp.type === 'monster') continue;
       const edgeKey = [id, nbrId].sort().join('|');
       if (drawnEdges.has(edgeKey)) continue;
       drawnEdges.add(edgeKey);
-      const nB = adv.nodes[nbrId];
-      if (!nB) continue;
+      const nB = adv.nodes[nbrId]; if (!nB) continue;
       const rB = nbrSp.type === 'start' ? 16 : 14;
-      const bothVisited = isVisited(id) && isVisited(nbrId);
-      const obs = allObs.filter(o => o.id !== id && o.id !== nbrId);
-      const pts = routeEdge(nA.x, nA.y, nB.x, nB.y, obs);
-      const d = buildPath(pts, rA, rB);
-      svg += `<path d="${d}" class="map-edge ${bothVisited ? 'visited' : ''}" />`;
+      edgesToRoute.push({ id, nbrId, nA, nB, rA, rB,
+        len: Math.hypot(nB.x-nA.x, nB.y-nA.y),
+        bothVisited: isVisited(id) && isVisited(nbrId) });
     }
+  }
+  edgesToRoute.sort((a, b) => b.len - a.len); // longest first
+
+  // Route each edge, accumulating committed segments as crossing obstacles
+  const routedSegs = []; // flat [x1,y1,x2,y2] tuples
+  for (const e of edgesToRoute) {
+    const obs = allObs.filter(o => o.id !== e.id && o.id !== e.nbrId);
+    const candidates = getCandidates(e.nA.x, e.nA.y, e.nB.x, e.nB.y);
+    let best = candidates[0], bestScore = Infinity;
+    for (const c of candidates) {
+      const s = scoreCandidate(c, obs, routedSegs);
+      if (s < bestScore) { bestScore = s; best = c; }
+    }
+    for (let i=0; i<best.length-1; i++)
+      routedSegs.push([best[i][0], best[i][1], best[i+1][0], best[i+1][1]]);
+    const d = buildPath(best, e.rA, e.rB);
+    svg += `<path d="${d}" fill="none" class="map-edge ${e.bothVisited ? 'visited' : ''}" />`;
   }
 
   // Monster rooms: dashed access lines from adjacent spaces + monster node rectangles
