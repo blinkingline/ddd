@@ -1073,47 +1073,37 @@ function renderPhaseUI() {
 
   if (state.phase === 'assignPair') {
     const adv = getAdv();
-    const pIdx = state.currentPair;
 
-    // Build tab-style pair selector showing both pairs
-    const pairTabs = state.pairs.map((p, i) => {
-      const done = p.used || p.forfeited;
-      const active = i === pIdx;
-      const label = done
-        ? `Pair ${i+1}: ${p.total} ✓`
-        : `Pair ${i+1}: [${p.dice.join('+')}]=${p.total}`;
-      return done
-        ? `<span class="pair-tab done">${label}</span>`
-        : `<button class="pair-tab${active ? ' active' : ''}" data-switchpair="${i}">${label}</button>`;
+    const pairPanels = state.pairs.map((pair, i) => {
+      const done = pair.used || pair.forfeited;
+      if (done) {
+        return `<div class="pair-panel done"><div class="pair-panel-header">Pair ${i+1}: ${pair.total} ✓</div></div>`;
+      }
+      const validSpaces = getValidSpaces(pair);
+      const attackable = getAttackableMonsters(pair);
+      const hasOptions = validSpaces.length > 0 || attackable.length > 0;
+      const spaceButtons = validSpaces.map(id =>
+        `<button class="option-btn space-btn" data-visitspace="${id}" data-pairidx="${i}">${spaceOptionLabel(id)}</button>`
+      ).join('');
+      const monsterButtons = attackable.map(mid => {
+        const m = adv.monsters[mid];
+        const ms = state.monsterState[mid];
+        return `<button class="option-btn monster-btn" data-attack="${mid}" data-pairidx="${i}">&#x2694; ${m.name} (${ms.health}/${m.hp} HP)</button>`;
+      }).join('');
+      return `<div class="pair-panel">
+        <div class="pair-panel-header">Pair ${i+1}: [${pair.dice.join('+')}] = <b>${pair.total}</b></div>
+        <div class="options-area">
+          ${hasOptions
+            ? `<div class="options-grid">${spaceButtons}${monsterButtons}</div>`
+            : `<p class="no-options">No valid moves — must forfeit.</p>`}
+        </div>
+        <button class="action-btn skip" data-forfeit="${i}">Forfeit (−1 life)</button>
+      </div>`;
     }).join('');
-
-    const pair = state.pairs[pIdx];
-    const validSpaces = getValidSpaces(pair);
-    const attackable = getAttackableMonsters(pair);
-
-    const spaceButtons = validSpaces.map(id =>
-      `<button class="option-btn space-btn" data-visitspace="${id}">${spaceOptionLabel(id)}</button>`
-    ).join('');
-
-    const monsterButtons = attackable.map(mid => {
-      const m = adv.monsters[mid];
-      const ms = state.monsterState[mid];
-      return `<button class="option-btn monster-btn" data-attack="${mid}">&#x2694; ${m.name} (${ms.health}/${m.hp} HP)</button>`;
-    }).join('');
-
-    const hasOptions = validSpaces.length > 0 || attackable.length > 0;
 
     return `${bar}<div class="assign-section">
-      <div class="pair-tabs">${pairTabs}</div>
-      <div class="options-area">
-        ${hasOptions
-          ? `<div class="options-grid">${spaceButtons}${monsterButtons}</div>`
-          : `<p class="no-options">No valid moves for ${pair.total}. You must forfeit this pair.</p>`}
-      </div>
-      <div class="pair-footer">
-        <button class="action-btn skip" data-action="forfeit">Forfeit (−1 life)</button>
-        ${state.torches > 0 ? `<button class="action-btn" data-action="useTorch">&#x1F525; Torch (${state.torches})</button>` : ''}
-      </div>
+      ${pairPanels}
+      ${state.torches > 0 ? `<div class="pair-footer" style="margin-top:10px"><button class="action-btn" data-action="useTorch">&#x1F525; Torch (${state.torches})</button></div>` : ''}
     </div>`;
   }
 
@@ -1561,18 +1551,23 @@ function attachListeners() {
   const app = document.getElementById('app');
   if (_appClickHandler) app.removeEventListener('click', _appClickHandler);
   _appClickHandler = e => {
-    const t = e.target.closest('[data-action],[data-realm],[data-split],[data-visitspace],[data-attack],[data-bswap],[data-chest],[data-switchpair]');
+    const t = e.target.closest('[data-action],[data-realm],[data-split],[data-visitspace],[data-attack],[data-bswap],[data-chest],[data-forfeit]');
     if (!t) return;
 
     if (t.dataset.realm)       { initGame(t.dataset.realm); return; }
     if (t.dataset.split)       { selectSplit(+t.dataset.split); return; }
-    if (t.dataset.switchpair !== undefined) { state.currentPair = +t.dataset.switchpair; render(); return; }
+    if (t.dataset.forfeit !== undefined) { state.currentPair = +t.dataset.forfeit; forfeitPair(); return; }
     if (t.dataset.visitspace)  {
+      if (t.dataset.pairidx !== undefined) state.currentPair = +t.dataset.pairidx;
       if (state.phase === 'torch') assignTorchToSpace(t.dataset.visitspace);
       else assignToSpace(t.dataset.visitspace);
       return;
     }
-    if (t.dataset.attack)      { assignToMonster(t.dataset.attack); return; }
+    if (t.dataset.attack)      {
+      if (t.dataset.pairidx !== undefined) state.currentPair = +t.dataset.pairidx;
+      assignToMonster(t.dataset.attack);
+      return;
+    }
     if (t.dataset.bswap)       { const [p,d] = t.dataset.bswap.split('-').map(Number); swapBlackDie(p,d); return; }
     if (t.dataset.chest)       { chooseChestReward(t.dataset.chest); return; }
 
