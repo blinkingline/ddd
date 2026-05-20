@@ -636,6 +636,9 @@ body, html {
   to   { filter: drop-shadow(0 0 10px #2ecc71); }
 }
 .space-node.available:hover { fill: rgba(46,204,113,0.3); }
+.space-node.btn-hovered { stroke: #ffffff !important; stroke-width: 4 !important;
+                          filter: drop-shadow(0 0 14px #fff) !important;
+                          animation: none !important; }
 
 .space-label {
   text-anchor: middle;
@@ -658,8 +661,8 @@ body, html {
 .dice-icon-mini       { fill: #1a1a2a; stroke: #9b59b6; stroke-width: 1; pointer-events: none; }
 .dice-pip-mini        { fill: #9b59b6; pointer-events: none; }
 .legend-text          { font-size: 8px; fill: #888; font-family: 'Courier New', monospace; pointer-events: none; }
-.monster-access-line  { stroke: #8b4444; stroke-width: 1.5; stroke-dasharray: 4 3; opacity: 0.6; }
-.monster-access-line.accessible { stroke: #e74c3c; stroke-width: 2; opacity: 0.85; }
+.monster-access-line  { stroke: #cc4444; stroke-width: 2; stroke-dasharray: 6 4; opacity: 0.75; }
+.monster-access-line.accessible { stroke: #ff5555; stroke-width: 2.5; stroke-dasharray: 6 4; opacity: 0.95; }
 .monster-access-line.defeated   { stroke: #444; stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.2; }
 
 /* ── Cloud Setup ── */

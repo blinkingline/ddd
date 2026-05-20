@@ -1419,12 +1419,16 @@ function renderSVGMap() {
     if (highlighted) cls += ' available';
 
     const r = sp.type === 'start' ? 16 : 14;
-    // Dashed red ring on nodes that adjoin a monster room
+    // Opaque backing circle masks any edges that pass behind this node
+    svg += `<circle cx="${n.x}" cy="${n.y}" r="${r+2}" fill="#1a1a1a" stroke="none"/>`;
+    // Dashed red ring on nodes that adjoin an undefeated monster room
     const adjMonsters = sp.adj.filter(nid => adv.spaces[nid]?.type === 'monster' && !state.monsterState[nid]?.defeated);
     if (adjMonsters.length > 0) {
-      svg += `<circle cx="${n.x}" cy="${n.y}" r="${r+5}" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.65"/>`;
+      svg += `<circle cx="${n.x}" cy="${n.y}" r="${r+6}" fill="none" stroke="#cc3333" stroke-width="2" stroke-dasharray="5 3" opacity="0.8"/>`;
     }
-    svg += `<circle cx="${n.x}" cy="${n.y}" r="${r}" class="${cls}" />`;
+    // data-spaceid always present so hover can find the circle; data-visitspace makes it clickable
+    const clickAttr = highlighted || state.phase === 'torch' ? ` data-visitspace="${id}"` : '';
+    svg += `<circle cx="${n.x}" cy="${n.y}" r="${r}" class="${cls}" data-spaceid="${id}"${clickAttr}/>`;
 
     if (sp.type === 'doubles' && !vis) {
       // Two mini dice icons — no number (any doubles works)
@@ -1519,6 +1523,7 @@ function renderGameOver() {
       <div class="game-over">
         <h2>&#x1F480; Defeated!</h2>
         <p style="font-size:1.1em;margin:12px 0">You fell with <b>${score} VP</b> earned.</p>
+        <p style="color:#e74c3c;font-style:italic">${scoreRating(score)}</p>
         <button data-action="quit">Try Again</button>
       </div>
     </div>
@@ -1557,6 +1562,20 @@ function attachListeners() {
     else if (action === 'quit')         { state.screen = 'setup'; render(); }
   };
   app.addEventListener('click', _appClickHandler);
+
+  // Hovering an option button highlights the corresponding space on the map
+  app.addEventListener('mouseover', e => {
+    const btn = e.target.closest('.option-btn[data-visitspace]');
+    if (!btn) return;
+    const circle = app.querySelector(`circle[data-spaceid="${btn.dataset.visitspace}"]`);
+    if (circle) circle.classList.add('btn-hovered');
+  });
+  app.addEventListener('mouseout', e => {
+    const btn = e.target.closest('.option-btn[data-visitspace]');
+    if (!btn) return;
+    const circle = app.querySelector(`circle[data-spaceid="${btn.dataset.visitspace}"]`);
+    if (circle) circle.classList.remove('btn-hovered');
+  });
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
