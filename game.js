@@ -1061,7 +1061,10 @@ function renderPhaseUI() {
         <div class="pair-box ${state.useBlackDieInPair === 1 ? 'black-used' : ''} ${p1ok ? 'pair-valid' : 'pair-invalid'}">Pair 2: [${p[1].dice.join('+')}] = <b>${p[1].total}</b></div>
       </div>
       ${blackBtns}
-      <button class="roll-btn" data-action="confirmPairs" style="margin-top:12px;font-size:1.1em;padding:12px 28px">Confirm Pairs →</button>
+      <div style="display:flex;gap:10px;margin-top:12px;justify-content:center">
+        <button class="roll-btn" data-action="undoSplit" style="font-size:1em;padding:10px 20px;background:rgba(255,255,255,0.05);border-color:#666;color:#aaa">← Back</button>
+        <button class="roll-btn" data-action="confirmPairs" style="font-size:1.1em;padding:12px 28px">Confirm Pairs →</button>
+      </div>
     </div>`;
   }
 
@@ -1568,6 +1571,7 @@ function attachListeners() {
     const action = t.dataset.action;
     if      (action === 'roll')         rollDice();
     else if (action === 'confirmPairs') confirmPairs();
+    else if (action === 'undoSplit')    { state.phase = 'selectSplit'; state.selectedSplit = null; state.pairs = []; state.useBlackDieInPair = null; render(); }
     else if (action === 'forfeit')      forfeitPair();
     else if (action === 'useTorch')     useTorch();
     else if (action === 'cancelTorch')  { state.phase = 'assignPair'; render(); }
