@@ -690,15 +690,19 @@ function forfeitPair() {
 }
 
 function advancePair() {
-  if (state.currentPair === 0) {
-    state.currentPair = 1;
-    const p = state.pairs[1];
-    if (state.pendingChest) { openChest(); return; }
-    state.message = `Assign Pair 2 (total ${p.total}). Choose a space or monster below.`;
+  if (state.pendingChest) { openChest(); return; }
+  const done0 = state.pairs[0].used || state.pairs[0].forfeited;
+  const done1 = state.pairs[1].used || state.pairs[1].forfeited;
+  if (done0 && done1) {
+    endRound();
+  } else if (!done0) {
+    state.currentPair = 0;
+    state.message = `Assign Pair 1 (total ${state.pairs[0].total}). Choose a space or monster.`;
     render();
   } else {
-    if (state.pendingChest) { openChest(); return; }
-    endRound();
+    state.currentPair = 1;
+    state.message = `Assign Pair 2 (total ${state.pairs[1].total}). Choose a space or monster.`;
+    render();
   }
 }
 
