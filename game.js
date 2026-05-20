@@ -620,7 +620,7 @@ function triggerSpaceEffects(spaceId) {
   // Fist spaces: deal 1 damage to all active monsters
   if (sp.type === 'fist') {
     for (const [mid, ms] of Object.entries(state.monsterState)) {
-      if (!ms.defeated) dealDamage(mid, 1, true);
+      if (!ms.defeated) dealDamage(mid, 1);
     }
     checkAchievement('fist5of6', spaceId);
   }
@@ -646,20 +646,20 @@ function assignToMonster(monsterId) {
       state.message = `${m.name} is Armored — both pairs must match its numbers. Pair ${otherIdx + 1} total ${otherPair.total} doesn't match.`;
       render(); return;
     }
-    dealDamage(monsterId, 2, false);
+    dealDamage(monsterId, 2);
     state.pairs[0].used = true;
     state.pairs[1].used = true;
     state.currentPair = 2;
     endRound();
   } else {
-    dealDamage(monsterId, 1, false);
+    dealDamage(monsterId, 1);
     state.message = `Attacked ${m.name} for 1 damage (${state.monsterState[monsterId].health}/${m.hp} HP remaining).`;
     pair.used = true;
     advancePair();
   }
 }
 
-function dealDamage(monsterId, amount, fromFist) {
+function dealDamage(monsterId, amount) {
   const adv = getAdv();
   const m = adv.monsters[monsterId];
   const ms = state.monsterState[monsterId];
@@ -667,7 +667,7 @@ function dealDamage(monsterId, amount, fromFist) {
   ms.health = Math.max(0, ms.health - amount);
   ms.totalDamage += amount;
   if (m.isBoss) state.bossDamageDealt += amount;
-  if (!fromFist) state.roundDamageDealt = true;
+  state.roundDamageDealt = true;
   if (ms.health <= 0) defeatMonster(monsterId);
 }
 
