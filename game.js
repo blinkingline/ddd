@@ -344,41 +344,41 @@ function buildAnimals() {
     '18': {id:'18', name:'Punk Hare',      hp:5,  isBoss:false, isArmored:false, black:[3,11], white:[],           gemFirst:3, gemSub:1, lifeLoss:0},
   };
 
-  // SVG node positions — all adjacent pairs verified ≥45px apart to prevent ring overlap
+  // SVG node positions — BFS from boss (15) at centre, radiating outward
   const nodes = {
-    // ── Left starts ───────────────────────────────────────────────────────────
-    '1': {x:50,  y:55},   '2': {x:50,  y:130},  '3': {x:50,  y:205},
-    '4': {x:50,  y:280},  '5': {x:50,  y:355},  '6': {x:50,  y:425},
-    // ── Right starts ──────────────────────────────────────────────────────────
-    '7': {x:740, y:55},   '8': {x:740, y:140},  '9': {x:740, y:225},
-    '10':{x:740, y:310},  '11':{x:740, y:395},
-    // ── Monster rooms ─────────────────────────────────────────────────────────
-    '12':{x:210, y:80},   '13':{x:610, y:120},  '14':{x:175, y:280},
-    '15':{x:390, y:285},  '16':{x:390, y:465},  '17':{x:660, y:455},  '18':{x:550, y:340},
-    // ── Gem spaces ────────────────────────────────────────────────────────────
-    '19':{x:350, y:75},   '20':{x:470, y:120},  '21':{x:680, y:275},
-    '22':{x:305, y:135},  '23':{x:170, y:430},  '24':{x:225, y:455},
-    '25':{x:335, y:445},  '26':{x:630, y:330},
-    // ── Fist spaces ───────────────────────────────────────────────────────────
-    '27':{x:190, y:360},  '28':{x:500, y:70},   '29':{x:495, y:215},
-    '30':{x:705, y:370},  '31':{x:290, y:480},  '32':{x:155, y:48},
-    // ── Doubles spaces ────────────────────────────────────────────────────────
-    '33':{x:305, y:190},  '34':{x:508, y:268},  '35':{x:640, y:240},
-    '36':{x:350, y:395},  '37':{x:125, y:175},
-    // ── Chest spaces ──────────────────────────────────────────────────────────
-    '38':{x:265, y:165},  '39':{x:505, y:310},
-    // ── Regular spaces ────────────────────────────────────────────────────────
-    '40':{x:130, y:88},   '41':{x:130, y:245},  '42':{x:120, y:390},
-    '43':{x:130, y:330},  '44':{x:240, y:140},  '45':{x:295, y:95},
-    '46':{x:350, y:130},  '47':{x:390, y:190},  '48':{x:450, y:200},
-    '49':{x:330, y:230},  '50':{x:455, y:255},  '51':{x:580, y:200},
-    '52':{x:675, y:75},   '53':{x:685, y:175},  '54':{x:460, y:320},
-    '55':{x:510, y:370},  '56':{x:590, y:280},  '57':{x:548, y:240},
-    '58':{x:595, y:395},  '59':{x:630, y:360},  '60':{x:670, y:400},
-    '61':{x:615, y:440},  '62':{x:480, y:440},  '63':{x:420, y:420},
-    '64':{x:465, y:490},  '65':{x:280, y:360},  '66':{x:235, y:315},
-    '67':{x:250, y:220},  '68':{x:320, y:290},  '69':{x:355, y:345},
-    '70':{x:530, y:155},
+    // Boss (centre)
+    '15':{x:500, y:290},
+    // Level 1 — adjacent to boss
+    '49':{x:415, y:205}, '50':{x:575, y:210}, '54':{x:580, y:355}, '69':{x:410, y:360},
+    // Level 2
+    '22':{x:315, y:155}, '47':{x:485, y:135}, '48':{x:655, y:155}, '34':{x:680, y:265},
+    '39':{x:660, y:380}, '55':{x:535, y:435}, '68':{x:330, y:395},
+    // Level 3
+    '38':{x:215, y:140}, '46':{x:380, y:80},  '70':{x:755, y:125}, '51':{x:765, y:265},
+    '26':{x:755, y:385}, '56':{x:625, y:460}, '58':{x:485, y:470}, '33':{x:225, y:265},
+    // Level 4
+    '67':{x:150, y:120}, '45':{x:295, y:70},  '19':{x:445, y:55},  '20':{x:840, y:90},
+    '13':{x:845, y:215}, '21':{x:845, y:310}, '11':{x:855, y:390}, '35':{x:715, y:460},
+    '57':{x:615, y:515}, '59':{x:520, y:520}, '18':{x:400, y:515},
+    // Level 5
+    '14':{x:65,  y:120}, '44':{x:205, y:55},  '12':{x:345, y:30},  '28':{x:895, y:55},
+    '52':{x:930, y:165}, '53':{x:950, y:270}, '10':{x:945, y:360}, '29':{x:620, y:565},
+    '60':{x:555, y:570},
+    // Level 6
+    '41':{x:65,  y:215}, '43':{x:110, y:345}, '66':{x:125, y:445}, '37':{x:130, y:55},
+    '40':{x:270, y:30},  '32':{x:420, y:25},  '7': {x:960, y:105}, '8': {x:975, y:215},
+    '9': {x:970, y:315}, '30':{x:675, y:565}, '17':{x:730, y:535},
+    // Level 7
+    '3': {x:25,  y:200}, '4': {x:25,  y:320}, '5': {x:25,  y:430}, '42':{x:75,  y:465},
+    '27':{x:90,  y:540}, '65':{x:260, y:510}, '1': {x:165, y:25},  '2': {x:80,  y:95},
+    '61':{x:815, y:545},
+    // Level 8
+    '6': {x:25,  y:510}, '23':{x:85,  y:595}, '24':{x:195, y:600}, '36':{x:450, y:560},
+    '62':{x:855, y:570},
+    // Level 9
+    '25':{x:390, y:595}, '63':{x:650, y:585}, '16':{x:720, y:590},
+    // Level 10
+    '31':{x:315, y:600}, '64':{x:560, y:598},
   };
 
   // Use hand-placed positions directly — force simulation was making layout worse
@@ -1153,27 +1153,35 @@ function renderSVGMap() {
     : new Set();
   const highlightSet = new Set([...validSet, ...torchSet]);
 
-  const W = 780, H = 530;
+  const W = 1000, H = 620;
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="dungeon-map">`;
 
-  // Helper: clip a straight line between two circles
-  function edgePts(ax, ay, ar, bx, by, br) {
-    const dx = bx - ax, dy = by - ay;
-    const len = Math.sqrt(dx*dx + dy*dy) || 1;
-    const ux = dx/len, uy = dy/len;
-    return { x1: ax + ux*ar, y1: ay + uy*ar, x2: bx - ux*br, y2: by - uy*br };
+  // Clip a line to the edge of a square node (half-side hs)
+  function squareExit(cx, cy, hs, toX, toY) {
+    const dx = toX - cx, dy = toY - cy;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    if (adx < 0.001 && ady < 0.001) return [cx, cy];
+    const t = adx >= ady ? hs / adx : hs / ady;
+    return [cx + dx*t, cy + dy*t];
   }
 
-  // ── Connection stubs (door approach) ────────────────────────────────────────
-  // Each connection is shown as two short stubs — one from each node edge pointing
-  // toward the other — like doorways. No routing needed; crossings are impossible.
-  const STUB = 15; // px extending from node edge toward neighbour
+  // Clip a line to the edge of a monster rectangle (half-widths hw, hh)
+  function rectExit(cx, cy, hw, hh, toX, toY) {
+    const dx = toX - cx, dy = toY - cy;
+    if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return [cx, cy];
+    const tx = Math.abs(dx) > 0.001 ? hw / Math.abs(dx) : Infinity;
+    const ty = Math.abs(dy) > 0.001 ? hh / Math.abs(dy) : Infinity;
+    const t = Math.min(tx, ty);
+    return [cx + dx*t, cy + dy*t];
+  }
+
+  // ── Space-to-space edges (full straight lines, clipped at node boundaries) ──
   {
     const drawnEdges = new Set();
     for (const [id, sp] of Object.entries(adv.spaces)) {
       if (sp.type === 'monster') continue;
       const nA = adv.nodes[id]; if (!nA) continue;
-      const rA = sp.type === 'start' ? 16 : 14;
+      const hsA = sp.type === 'start' ? 16 : 14;
       const vA = isVisited(id);
       for (const nbrId of sp.adj) {
         const nbrSp = adv.spaces[nbrId];
@@ -1182,17 +1190,12 @@ function renderSVGMap() {
         if (drawnEdges.has(edgeKey)) continue;
         drawnEdges.add(edgeKey);
         const nB = adv.nodes[nbrId]; if (!nB) continue;
-        const rB = nbrSp.type === 'start' ? 16 : 14;
+        const hsB = nbrSp.type === 'start' ? 16 : 14;
         const vB = isVisited(nbrId);
-        const dx = nB.x - nA.x, dy = nB.y - nA.y;
-        const dist = Math.hypot(dx, dy); if (dist < 2) continue;
-        const ux = dx/dist, uy = dy/dist;
-        const sLen = Math.min(STUB, Math.max(3, (dist - rA - rB) / 2 - 2));
         const cls = vA && vB ? 'visited' : (vA || vB) ? 'frontier' : '';
-        // Stub from A toward B
-        svg += `<line x1="${(nA.x+ux*rA).toFixed(1)}" y1="${(nA.y+uy*rA).toFixed(1)}" x2="${(nA.x+ux*(rA+sLen)).toFixed(1)}" y2="${(nA.y+uy*(rA+sLen)).toFixed(1)}" class="map-edge ${cls}"/>`;
-        // Stub from B toward A
-        svg += `<line x1="${(nB.x-ux*rB).toFixed(1)}" y1="${(nB.y-uy*rB).toFixed(1)}" x2="${(nB.x-ux*(rB+sLen)).toFixed(1)}" y2="${(nB.y-uy*(rB+sLen)).toFixed(1)}" class="map-edge ${cls}"/>`;
+        const [x1, y1] = squareExit(nA.x, nA.y, hsA, nB.x, nB.y);
+        const [x2, y2] = squareExit(nB.x, nB.y, hsB, nA.x, nA.y);
+        svg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="map-edge ${cls}"/>`;
       }
     }
   }
@@ -1205,22 +1208,20 @@ function renderSVGMap() {
     const monsterRoom = adv.spaces[mid];
     const hasAccess = monsterRoom.adj.some(sid => isVisited(sid));
 
+    const mW = m.isBoss ? 90 : 60;
+    const mH = ms.defeated ? 28 : (m.isBoss ? 64 : 46);
     for (const sid of monsterRoom.adj) {
       const sn = adv.nodes[sid];
       if (!sn) continue;
-      const rS = adv.spaces[sid]?.type === 'start' ? 16 : 14;
+      const hsS = adv.spaces[sid]?.type === 'start' ? 16 : 14;
       const lineState = ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : '';
-      const dx = mn.x - sn.x, dy = mn.y - sn.y;
-      const dist = Math.hypot(dx, dy); if (dist < 2) continue;
-      const ux = dx/dist, uy = dy/dist;
-      // Stub from space node toward monster
-      svg += `<line x1="${(sn.x+ux*rS).toFixed(1)}" y1="${(sn.y+uy*rS).toFixed(1)}" x2="${(sn.x+ux*(rS+STUB)).toFixed(1)}" y2="${(sn.y+uy*(rS+STUB)).toFixed(1)}" class="monster-access-line ${lineState}"/>`;
+      const [x1, y1] = squareExit(sn.x, sn.y, hsS, mn.x, mn.y);
+      const [x2, y2] = rectExit(mn.x, mn.y, mW/2, mH/2, sn.x, sn.y);
+      svg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="monster-access-line ${lineState}"/>`;
     }
 
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
     const pct = ms.health / m.hp;
-    const mW = m.isBoss ? 90 : 60;
-    const mH = ms.defeated ? 28 : (m.isBoss ? 64 : 46);
     svg += `<rect x="${mn.x-mW/2}" y="${mn.y-mH/2}" width="${mW}" height="${mH}" rx="4" class="${cls}" />`;
     if (!ms.defeated) {
       const barY = mn.y + mH/2 - 9;
@@ -1265,17 +1266,12 @@ function renderSVGMap() {
     if (vis)         cls += ' visited';
     if (highlighted) cls += ' available';
 
-    const r = sp.type === 'start' ? 16 : 14;
-    // Opaque backing circle masks any edges that pass behind this node
-    svg += `<circle cx="${n.x}" cy="${n.y}" r="${r+2}" fill="#1a1a1a" stroke="none"/>`;
-    // Dashed red ring on nodes that adjoin an undefeated monster room
-    const adjMonsters = sp.adj.filter(nid => adv.spaces[nid]?.type === 'monster' && !state.monsterState[nid]?.defeated);
-    if (adjMonsters.length > 0) {
-      svg += `<circle cx="${n.x}" cy="${n.y}" r="${r+6}" fill="none" stroke="#cc3333" stroke-width="2" stroke-dasharray="5 3" opacity="0.8"/>`;
-    }
-    // data-spaceid always present so hover can find the circle; data-visitspace makes it clickable
+    const hs = sp.type === 'start' ? 16 : 14;
+    // Opaque backing rect masks edges that pass behind this node
+    svg += `<rect x="${n.x-hs-2}" y="${n.y-hs-2}" width="${(hs+2)*2}" height="${(hs+2)*2}" rx="2" fill="#1a1a1a" stroke="none"/>`;
+    // data-spaceid always present so hover can find it; data-visitspace makes it clickable
     const clickAttr = highlighted || state.phase === 'torch' ? ` data-visitspace="${id}"` : '';
-    svg += `<circle cx="${n.x}" cy="${n.y}" r="${r}" class="${cls}" data-spaceid="${id}"${clickAttr}/>`;
+    svg += `<rect x="${n.x-hs}" y="${n.y-hs}" width="${hs*2}" height="${hs*2}" rx="2" class="${cls}" data-spaceid="${id}"${clickAttr}/>`;
 
     if (sp.type === 'doubles' && !vis) {
       // Two mini dice icons — no number (any doubles works)
@@ -1295,28 +1291,28 @@ function renderSVGMap() {
   }
 
   // ── Legend ────────────────────────────────────────────────────────────────
-  const ly = 514;
+  const ly = 604;
   svg += `<line x1="0" y1="${ly-4}" x2="${W}" y2="${ly-4}" stroke="#333" stroke-width="1"/>`;
   const legend = [
     { x:14,  cls:'space-node start-node',   label:'Start (any roll)' },
     { x:135, cls:'space-node gem-node',      label:'Gem' },
-    { x:193, cls:'space-node chest-node',    label:'Chest (gold)' },
-    { x:288, cls:'space-node fist-node',     label:'Fist ✊ (n+n pair)' },
-    { x:430, cls:'space-node doubles-node',  label:'Any Doubles' },
-    { x:543, cls:'space-node visited',       label:'Visited' },
+    { x:205, cls:'space-node chest-node',    label:'Chest (gold)' },
+    { x:310, cls:'space-node fist-node',     label:'Fist ✊ (n+n pair)' },
+    { x:465, cls:'space-node doubles-node',  label:'Any Doubles' },
+    { x:590, cls:'space-node visited',       label:'Visited' },
   ];
   for (const {x, cls, label} of legend) {
-    svg += `<circle cx="${x}" cy="${ly+6}" r="8" class="${cls}"/>`;
+    svg += `<rect x="${x-8}" y="${ly-2}" width="16" height="16" rx="2" class="${cls}"/>`;
     svg += `<text x="${x+13}" y="${ly+10}" class="legend-text">${label}</text>`;
   }
   // doubles mini-dice in legend
-  svg += `<rect x="423" y="${ly}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
-  svg += `<rect x="431" y="${ly}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
+  svg += `<rect x="458" y="${ly+1}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
+  svg += `<rect x="466" y="${ly+1}" width="6" height="6" rx="1" class="dice-icon-mini"/>`;
   // fist icon in legend
-  svg += `<text x="288" y="${ly+8}" class="fist-icon-lbl" style="font-size:8px">✊</text>`;
+  svg += `<text x="310" y="${ly+9}" class="fist-icon-lbl" style="font-size:8px">✊</text>`;
   // Monster legend entry
-  svg += `<rect x="640" y="${ly-2}" width="48" height="18" rx="3" class="monster-node"/>`;
-  svg += `<text x="664" y="${ly+10}" class="monster-label">Monster</text>`;
+  svg += `<rect x="700" y="${ly-2}" width="48" height="18" rx="3" class="monster-node"/>`;
+  svg += `<text x="724" y="${ly+10}" class="monster-label">Monster</text>`;
 
   svg += '</svg>';
   return svg;
@@ -1413,8 +1409,8 @@ function attachListeners() {
   app.addEventListener('mouseover', e => {
     const btn = e.target.closest('.option-btn[data-visitspace]');
     if (btn) {
-      const circle = app.querySelector(`circle[data-spaceid="${btn.dataset.visitspace}"]`);
-      if (circle) circle.classList.add('btn-hovered');
+      const el = app.querySelector(`[data-spaceid="${btn.dataset.visitspace}"]`);
+      if (el) el.classList.add('btn-hovered');
       return;
     }
     // Hovering a split option highlights all spaces reachable with that split's pairs
@@ -1428,8 +1424,8 @@ function attachListeners() {
           ...getValidSpaces({ dice: split.d2, total: split.t2 }),
         ]);
         ids.forEach(sid => {
-          const circle = app.querySelector(`circle[data-spaceid="${sid}"]`);
-          if (circle) circle.classList.add('btn-hovered');
+          const el = app.querySelector(`[data-spaceid="${sid}"]`);
+          if (el) el.classList.add('btn-hovered');
         });
       }
     }
@@ -1437,8 +1433,8 @@ function attachListeners() {
   app.addEventListener('mouseout', e => {
     const btn = e.target.closest('.option-btn[data-visitspace]');
     if (btn) {
-      const circle = app.querySelector(`circle[data-spaceid="${btn.dataset.visitspace}"]`);
-      if (circle) circle.classList.remove('btn-hovered');
+      const el = app.querySelector(`[data-spaceid="${btn.dataset.visitspace}"]`);
+      if (el) el.classList.remove('btn-hovered');
       return;
     }
     const splitBtn = e.target.closest('.split-option[data-split]');
