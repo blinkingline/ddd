@@ -1407,17 +1407,19 @@ function renderSVGMap() {
       svg += `<rect x="${mn.x-mW/2+2}" y="${barY}" width="${mW-4}" height="5" fill="none" stroke="#555" stroke-width="1" />`;
       // Name line
       svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 11}" class="monster-label">${m.name.split(' ')[0]}</text>`;
-      // Attack numbers — boss splits white across two lines to fit
-      const blackStr = m.black.length ? `B:${m.black.join(',')}` : '';
-      const whites = m.white.map(n => ms.unlockedWhite.has(n) ? `W:${n}` : `(${n})`);
-      if (m.isBoss && whites.length > 3) {
-        const line1 = [blackStr, ...whites.slice(0, 3)].filter(Boolean).join(' ');
-        const line2 = whites.slice(3).join(' ');
-        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 24}" class="monster-nums-label">${line1}</text>`;
-        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 34}" class="monster-nums-label">${line2}</text>`;
+      // Attack numbers: available (white) | locked (grey)
+      const available = [...m.black, ...m.white.filter(n => ms.unlockedWhite.has(n))];
+      const locked = m.white.filter(n => !ms.unlockedWhite.has(n));
+      const numSpan = (nums, col) => nums.length ? `<tspan fill="${col}">${nums.join(' ')}</tspan>` : '';
+      const sep = available.length && locked.length ? `<tspan fill="#555"> | </tspan>` : '';
+      if (m.isBoss && (available.length + locked.length) > 3) {
+        const allNums = [...available.map(n => ({n, avail:true})), ...locked.map(n => ({n, avail:false}))];
+        const half = Math.ceil(allNums.length / 2);
+        const mkSpans = ns => ns.map(({n,avail}) => `<tspan fill="${avail ? '#fff' : '#777'}">${n} </tspan>`).join('');
+        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 24}" class="monster-nums-label">${mkSpans(allNums.slice(0,half))}</text>`;
+        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 34}" class="monster-nums-label">${mkSpans(allNums.slice(half))}</text>`;
       } else {
-        const numsLine = [blackStr, ...whites].filter(Boolean).join(' ');
-        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 24}" class="monster-nums-label">${numsLine}</text>`;
+        svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 24}" class="monster-nums-label">${numSpan(available,'#fff')}${sep}${numSpan(locked,'#777')}</text>`;
       }
     } else {
       svg += `<text x="${mn.x}" y="${mn.y+5}" class="monster-label">✓ ${m.name.split(' ')[0]}</text>`;
