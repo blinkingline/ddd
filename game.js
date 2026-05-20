@@ -1175,7 +1175,7 @@ function renderSVGMap() {
     return [cx + dx*t, cy + dy*t];
   }
 
-  // ── Space-to-space edges (full straight lines, clipped at node boundaries) ──
+  // ── Space-to-space corridors (wide filled polygons, clipped at node boundaries) ──
   {
     const drawnEdges = new Set();
     for (const [id, sp] of Object.entries(adv.spaces)) {
@@ -1193,9 +1193,13 @@ function renderSVGMap() {
         const hsB = nbrSp.type === 'start' ? 16 : 14;
         const vB = isVisited(nbrId);
         const cls = vA && vB ? 'visited' : (vA || vB) ? 'frontier' : '';
-        const [x1, y1] = squareExit(nA.x, nA.y, hsA, nB.x, nB.y);
-        const [x2, y2] = squareExit(nB.x, nB.y, hsB, nA.x, nA.y);
-        svg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="map-edge ${cls}"/>`;
+        const [ex1, ey1] = squareExit(nA.x, nA.y, hsA, nB.x, nB.y);
+        const [ex2, ey2] = squareExit(nB.x, nB.y, hsB, nA.x, nA.y);
+        const cdx = ex2-ex1, cdy = ey2-ey1;
+        const clen = Math.hypot(cdx, cdy); if (clen < 1) continue;
+        const hw = 5, px = -cdy/clen*hw, py = cdx/clen*hw;
+        const pts = `${(ex1+px).toFixed(1)},${(ey1+py).toFixed(1)} ${(ex1-px).toFixed(1)},${(ey1-py).toFixed(1)} ${(ex2-px).toFixed(1)},${(ey2-py).toFixed(1)} ${(ex2+px).toFixed(1)},${(ey2+py).toFixed(1)}`;
+        svg += `<polygon points="${pts}" class="corridor ${cls}"/>`;
       }
     }
   }
@@ -1215,9 +1219,15 @@ function renderSVGMap() {
       if (!sn) continue;
       const hsS = adv.spaces[sid]?.type === 'start' ? 16 : 14;
       const lineState = ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : '';
-      const [x1, y1] = squareExit(sn.x, sn.y, hsS, mn.x, mn.y);
-      const [x2, y2] = rectExit(mn.x, mn.y, mW/2, mH/2, sn.x, sn.y);
-      svg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="monster-access-line ${lineState}"/>`;
+      const [ex1, ey1] = squareExit(sn.x, sn.y, hsS, mn.x, mn.y);
+      const [ex2, ey2] = rectExit(mn.x, mn.y, mW/2, mH/2, sn.x, sn.y);
+      const cdx = ex2-ex1, cdy = ey2-ey1;
+      const clen = Math.hypot(cdx, cdy);
+      if (clen >= 1) {
+        const hw = 4, px = -cdy/clen*hw, py = cdx/clen*hw;
+        const pts = `${(ex1+px).toFixed(1)},${(ey1+py).toFixed(1)} ${(ex1-px).toFixed(1)},${(ey1-py).toFixed(1)} ${(ex2-px).toFixed(1)},${(ey2-py).toFixed(1)} ${(ex2+px).toFixed(1)},${(ey2+py).toFixed(1)}`;
+        svg += `<polygon points="${pts}" class="monster-corridor ${lineState}"/>`;
+      }
     }
 
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';

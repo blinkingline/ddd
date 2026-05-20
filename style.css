@@ -613,9 +613,9 @@ body, html {
   background: rgba(0,0,0,0.2);
   border-radius: 8px;
 }
-.map-edge          { stroke: #666; stroke-width: 2; fill: none; stroke-linejoin: round; opacity: 0.6; }
-.map-edge.frontier { stroke: #8899aa; opacity: 0.85; }
-.map-edge.visited  { stroke: rgba(255,255,255,0.8); opacity: 1; }
+.corridor           { fill: #333; stroke: none; opacity: 0.55; }
+.corridor.frontier  { fill: #4a5a6a; opacity: 0.85; }
+.corridor.visited   { fill: #686868; opacity: 1; }
 
 .space-node { fill: #2a2a2a; stroke: #555; stroke-width: 2; cursor: default; }
 .space-node.start-node   { fill: #1a4a1a; stroke: #27ae60; stroke-width: 3; }
@@ -662,9 +662,9 @@ body, html {
 .dice-icon-mini       { fill: #1a1a2a; stroke: #9b59b6; stroke-width: 1; pointer-events: none; }
 .dice-pip-mini        { fill: #9b59b6; pointer-events: none; }
 .legend-text          { font-size: 8px; fill: #888; font-family: 'Courier New', monospace; pointer-events: none; }
-.monster-access-line  { stroke: #cc4444; stroke-width: 2; stroke-dasharray: 6 4; opacity: 0.75; }
-.monster-access-line.accessible { stroke: #ff5555; stroke-width: 2.5; stroke-dasharray: 6 4; opacity: 0.95; }
-.monster-access-line.defeated   { stroke: #444; stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.2; }
+.monster-corridor            { fill: #3a1818; stroke: none; opacity: 0.75; }
+.monster-corridor.accessible { fill: #6a2a2a; opacity: 0.95; }
+.monster-corridor.defeated   { fill: #2a2a2a; opacity: 0.2; }
 
 /* ── Cloud Setup ── */
 .cloud-setup {
