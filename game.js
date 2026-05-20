@@ -1475,19 +1475,12 @@ function renderSVGMap() {
   return svg;
 }
 
-// VP penalty per life point lost (index = LP lost, 1-based).
-// First 2 LP lost are free; beyond that penalties escalate.
-const LP_PENALTY = [0, 0, 0, 5, 10, 10, 15, 15, 15, 15, 20];
-
 function calcScore() {
   const adv = getAdv();
   const bossId = Object.keys(adv.monsters).find(id => adv.monsters[id].isBoss);
   const bossDefeated = bossId ? state.monsterState[bossId]?.defeated : false;
   const bossVP = bossDefeated ? 0 : Math.floor(state.bossDamageDealt / 3);
-  let lpPenalty = 0;
-  for (let i = 1; i <= Math.min(state.lifeLostCount, 10); i++)
-    lpPenalty += LP_PENALTY[i] || 0;
-  return state.gems * 3 + state.gold * 2 + bossVP - lpPenalty;
+  return state.gems * 3 + state.gold * 2 + bossVP;
 }
 
 function scoreRating(score) {
