@@ -1014,22 +1014,41 @@ function renderPhaseUI() {
       <p style="margin:8px 0;color:#aaa">Choose how to pair your white dice:</p>
       <div class="split-grid">
         ${splits.map((s, i) => {
+          const p1 = { dice: s.d1, total: s.t1 };
+          const p2 = { dice: s.d2, total: s.t2 };
+          const p1ok = getValidSpaces(p1).length > 0 || getAttackableMonsters(p1).length > 0;
+          const p2ok = getValidSpaces(p2).length > 0 || getAttackableMonsters(p2).length > 0;
+          const validCls = p1ok && p2ok ? 'split-valid-both' : (p1ok || p2ok ? 'split-valid-one' : 'split-valid-none');
           const d1Badge = s.d1[0] === s.d1[1] ? ' <span class="doubles-badge">✊×2</span>' : '';
           const d2Badge = s.d2[0] === s.d2[1] ? ' <span class="doubles-badge">✊×2</span>' : '';
-          return `<button class="split-option" data-split="${i}">[${s.d1.join('+')}]=${s.t1}${d1Badge} &amp; [${s.d2.join('+')}]=${s.t2}${d2Badge}</button>`;
+          return `<button class="split-option ${validCls}" data-split="${i}">[${s.d1.join('+')}]=${s.t1}${d1Badge} &amp; [${s.d2.join('+')}]=${s.t2}${d2Badge}</button>`;
         }).join('')}
       </div>
+      <p class="validity-legend"><span class="vl-green">█</span> both placeable &nbsp; <span class="vl-yellow">█</span> one placeable &nbsp; <span class="vl-red">█</span> neither</p>
     </div>`;
   }
 
   if (state.phase === 'confirmPairs') {
     const p = state.pairs;
+    const origSplit = pairSplits(state.whiteDice)[state.selectedSplit];
+    const p0ok = getValidSpaces(p[0]).length > 0 || getAttackableMonsters(p[0]).length > 0;
+    const p1ok = getValidSpaces(p[1]).length > 0 || getAttackableMonsters(p[1]).length > 0;
     const blackBtns = state.blackDieUses > 0 ? `
       <div class="black-die-section">
         <p>Swap black die [${state.blackDie}] into a pair — ${state.blackDieUses} use(s) left:</p>
         <div class="black-swap-grid">
-          ${p[0].dice.map((v, i) => `<button class="swap-btn" data-bswap="0-${i}">P1 die ${i+1}: [${v}]→[${state.blackDie}]</button>`).join('')}
-          ${p[1].dice.map((v, i) => `<button class="swap-btn" data-bswap="1-${i}">P2 die ${i+1}: [${v}]→[${state.blackDie}]</button>`).join('')}
+          ${origSplit.d1.map((v, idx) => {
+            const nd = origSplit.d1.slice(); nd[idx] = state.blackDie;
+            const np = { dice: nd, total: nd[0]+nd[1] };
+            const ok = getValidSpaces(np).length > 0 || getAttackableMonsters(np).length > 0;
+            return `<button class="swap-btn ${ok ? 'swap-valid' : 'swap-invalid'}" data-bswap="0-${idx}">P1 die ${idx+1}: [${v}]→[${state.blackDie}]</button>`;
+          }).join('')}
+          ${origSplit.d2.map((v, idx) => {
+            const nd = origSplit.d2.slice(); nd[idx] = state.blackDie;
+            const np = { dice: nd, total: nd[0]+nd[1] };
+            const ok = getValidSpaces(np).length > 0 || getAttackableMonsters(np).length > 0;
+            return `<button class="swap-btn ${ok ? 'swap-valid' : 'swap-invalid'}" data-bswap="1-${idx}">P2 die ${idx+1}: [${v}]→[${state.blackDie}]</button>`;
+          }).join('')}
         </div>
       </div>` : '';
     return `${bar}<div class="dice-section">
@@ -1038,8 +1057,8 @@ function renderPhaseUI() {
         <div class="die black">${state.blackDie}</div>
       </div>
       <div class="pairs-display">
-        <div class="pair-box ${state.useBlackDieInPair === 0 ? 'black-used' : ''}">Pair 1: [${p[0].dice.join('+')}] = <b>${p[0].total}</b></div>
-        <div class="pair-box ${state.useBlackDieInPair === 1 ? 'black-used' : ''}">Pair 2: [${p[1].dice.join('+')}] = <b>${p[1].total}</b></div>
+        <div class="pair-box ${state.useBlackDieInPair === 0 ? 'black-used' : ''} ${p0ok ? 'pair-valid' : 'pair-invalid'}">Pair 1: [${p[0].dice.join('+')}] = <b>${p[0].total}</b></div>
+        <div class="pair-box ${state.useBlackDieInPair === 1 ? 'black-used' : ''} ${p1ok ? 'pair-valid' : 'pair-invalid'}">Pair 2: [${p[1].dice.join('+')}] = <b>${p[1].total}</b></div>
       </div>
       ${blackBtns}
       <button class="roll-btn" data-action="confirmPairs" style="margin-top:12px;font-size:1.1em;padding:12px 28px">Confirm Pairs →</button>

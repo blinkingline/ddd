@@ -882,6 +882,19 @@ body, html {
 /* ── Pair box: black die used ── */
 .pair-box.black-used { border-color: #f1c40f; color: #f1c40f; }
 
+/* ── Pair validity colour-coding ── */
+.split-option.split-valid-both { border-color: #2ecc71; }
+.split-option.split-valid-one  { border-color: #f1c40f; }
+.split-option.split-valid-none { border-color: #e74c3c; }
+.pair-box.pair-valid   { border-color: #2ecc71; }
+.pair-box.pair-invalid { border-color: #e74c3c; }
+.swap-btn.swap-valid   { border-color: #2ecc71; color: #2ecc71; }
+.swap-btn.swap-invalid { border-color: #e74c3c; color: #e74c3c; }
+.validity-legend { font-size: 0.75em; color: #888; margin-top: 6px; }
+.vl-green  { color: #2ecc71; }
+.vl-yellow { color: #f1c40f; }
+.vl-red    { color: #e74c3c; }
+
 /* ── Solo badge ── */
 .solo-badge {
   padding: 4px 10px;
