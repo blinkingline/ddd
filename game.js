@@ -1351,11 +1351,25 @@ function renderSVGMap() {
     for (const sid of monsterRoom.adj) {
       const sn = adv.nodes[sid];
       if (!sn) continue;
-      // Clip access line: start at space circle edge, end at monster rect edge
       const mClip = m.isBoss ? 36 : 22;
-      const p = edgePts(sn.x, sn.y, 14, mn.x, mn.y, mClip);
       const lineState = ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : '';
-      svg += `<line x1="${p.x1.toFixed(1)}" y1="${p.y1.toFixed(1)}" x2="${p.x2.toFixed(1)}" y2="${p.y2.toFixed(1)}" class="monster-access-line ${lineState}" />`;
+      const directDist = Math.hypot(mn.x - sn.x, mn.y - sn.y);
+      if (directDist > 200) {
+        // Long access line: route it to avoid crossing the whole map
+        const obs = allObs.filter(o => o.id !== sid && o.id !== mid);
+        // Build the committed-so-far segments (all regular edge segs + access lines already drawn)
+        const cands = getCandidates(sn.x, sn.y, mn.x, mn.y, obs);
+        let best = cands[0], bestScore = Infinity;
+        for (const c of cands) {
+          const s = scoreCandidate(c, obs, []);
+          if (s < bestScore) { bestScore = s; best = c; }
+        }
+        const d = buildPath(best, 14, mClip);
+        svg += `<path d="${d}" fill="none" class="monster-access-line ${lineState}" />`;
+      } else {
+        const p = edgePts(sn.x, sn.y, 14, mn.x, mn.y, mClip);
+        svg += `<line x1="${p.x1.toFixed(1)}" y1="${p.y1.toFixed(1)}" x2="${p.x2.toFixed(1)}" y2="${p.y2.toFixed(1)}" class="monster-access-line ${lineState}" />`;
+      }
     }
 
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
