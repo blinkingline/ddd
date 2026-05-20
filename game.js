@@ -1300,9 +1300,11 @@ function renderSVGMap() {
       drawnEdges.add(edgeKey);
       const nB = adv.nodes[nbrId]; if (!nB) continue;
       const rB = nbrSp.type === 'start' ? 16 : 14;
+      const vA = isVisited(id), vB = isVisited(nbrId);
       edgesToRoute.push({ id, nbrId, nA, nB, rA, rB,
         len: Math.hypot(nB.x-nA.x, nB.y-nA.y),
-        bothVisited: isVisited(id) && isVisited(nbrId) });
+        bothVisited: vA && vB,
+        frontier: vA !== vB });
     }
   }
   edgesToRoute.sort((a, b) => a.len - b.len); // shortest first
@@ -1359,7 +1361,8 @@ function renderSVGMap() {
   // Draw all routed edges.
   for (const [, { path, e }] of edgePaths) {
     const d = buildPath(path, e.rA, e.rB);
-    svg += `<path d="${d}" fill="none" class="map-edge ${e.bothVisited ? 'visited' : ''}" />`;
+    const edgeCls = e.bothVisited ? 'visited' : e.frontier ? 'frontier' : '';
+    svg += `<path d="${d}" fill="none" class="map-edge ${edgeCls}" />`;
   }
 
   // Monster rooms: dashed access lines from adjacent spaces + monster node rectangles
@@ -1582,15 +1585,39 @@ function attachListeners() {
   // Hovering an option button highlights the corresponding space on the map
   app.addEventListener('mouseover', e => {
     const btn = e.target.closest('.option-btn[data-visitspace]');
-    if (!btn) return;
-    const circle = app.querySelector(`circle[data-spaceid="${btn.dataset.visitspace}"]`);
-    if (circle) circle.classList.add('btn-hovered');
+    if (btn) {
+      const circle = app.querySelector(`circle[data-spaceid="${btn.dataset.visitspace}"]`);
+      if (circle) circle.classList.add('btn-hovered');
+      return;
+    }
+    // Hovering a split option highlights all spaces reachable with that split's pairs
+    const splitBtn = e.target.closest('.split-option[data-split]');
+    if (splitBtn && state.phase === 'selectSplit') {
+      const splits = pairSplits(state.whiteDice);
+      const split = splits[+splitBtn.dataset.split];
+      if (split) {
+        const ids = new Set([
+          ...getValidSpaces({ dice: split.d1, total: split.t1 }),
+          ...getValidSpaces({ dice: split.d2, total: split.t2 }),
+        ]);
+        ids.forEach(sid => {
+          const circle = app.querySelector(`circle[data-spaceid="${sid}"]`);
+          if (circle) circle.classList.add('btn-hovered');
+        });
+      }
+    }
   });
   app.addEventListener('mouseout', e => {
     const btn = e.target.closest('.option-btn[data-visitspace]');
-    if (!btn) return;
-    const circle = app.querySelector(`circle[data-spaceid="${btn.dataset.visitspace}"]`);
-    if (circle) circle.classList.remove('btn-hovered');
+    if (btn) {
+      const circle = app.querySelector(`circle[data-spaceid="${btn.dataset.visitspace}"]`);
+      if (circle) circle.classList.remove('btn-hovered');
+      return;
+    }
+    const splitBtn = e.target.closest('.split-option[data-split]');
+    if (splitBtn) {
+      app.querySelectorAll('.space-node.btn-hovered').forEach(el => el.classList.remove('btn-hovered'));
+    }
   });
 }
 
