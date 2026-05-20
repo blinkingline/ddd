@@ -613,9 +613,9 @@ body, html {
   background: rgba(0,0,0,0.2);
   border-radius: 8px;
 }
-.map-edge          { stroke: #333; stroke-width: 2; fill: none; stroke-linejoin: round; opacity: 0.4; }
-.map-edge.frontier { stroke: #556677; opacity: 0.75; }
-.map-edge.visited  { stroke: rgba(255,255,255,0.55); opacity: 1; }
+.map-edge          { stroke: #666; stroke-width: 2; fill: none; stroke-linejoin: round; opacity: 0.6; }
+.map-edge.frontier { stroke: #8899aa; opacity: 0.85; }
+.map-edge.visited  { stroke: rgba(255,255,255,0.8); opacity: 1; }
 
 .space-node { fill: #2a2a2a; stroke: #555; stroke-width: 2; cursor: default; }
 .space-node.start-node   { fill: #1a4a1a; stroke: #27ae60; stroke-width: 3; }
