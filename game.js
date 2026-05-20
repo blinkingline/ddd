@@ -1182,8 +1182,13 @@ function renderSVGMap() {
   }
   // Candidate routes: straight + L/Z-shapes + perp offsets + border/corner routes
   // + per-obstacle bypass routes generated dynamically from the obstacle list.
+  // All intermediate waypoints are clamped to the SVG bounds to prevent off-page routing.
   function getCandidates(ax, ay, bx, by, obs) {
-    const T=8, B=525, L=8, R=775;
+    const T=8, B=522, L=8, R=772;
+    // Clamp helper — applied to all generated (non-endpoint) waypoints.
+    const cx = x => Math.max(L, Math.min(R, x));
+    const cy = y => Math.max(T, Math.min(B, y));
+    const cp = (x, y) => [cx(x), cy(y)];
     const dx=bx-ax, dy=by-ay, len=Math.hypot(dx,dy)||1;
     const mx=(ax+bx)/2, my=(ay+by)/2;
     const nx=-dy/len, ny=dx/len;
@@ -1191,14 +1196,14 @@ function renderSVGMap() {
     const m3y=ay+(by-ay)/3, m3y2=ay+2*(by-ay)/3;
     const cands = [
       [[ax,ay],[bx,by]],
-      [[ax,ay],[bx,ay],[bx,by]],
-      [[ax,ay],[ax,by],[bx,by]],
-      [[ax,ay],[mx,ay],[mx,by],[bx,by]],
-      [[ax,ay],[m3x,ay],[m3x,by],[bx,by]],
-      [[ax,ay],[m3x2,ay],[m3x2,by],[bx,by]],
-      [[ax,ay],[ax,my],[bx,my],[bx,by]],
-      [[ax,ay],[ax,m3y],[bx,m3y],[bx,by]],
-      [[ax,ay],[ax,m3y2],[bx,m3y2],[bx,by]],
+      [[ax,ay],cp(bx,ay),[bx,by]],
+      [[ax,ay],cp(ax,by),[bx,by]],
+      [[ax,ay],cp(mx,ay),cp(mx,by),[bx,by]],
+      [[ax,ay],cp(m3x,ay),cp(m3x,by),[bx,by]],
+      [[ax,ay],cp(m3x2,ay),cp(m3x2,by),[bx,by]],
+      [[ax,ay],cp(ax,my),cp(bx,my),[bx,by]],
+      [[ax,ay],cp(ax,m3y),cp(bx,m3y),[bx,by]],
+      [[ax,ay],cp(ax,m3y2),cp(bx,m3y2),[bx,by]],
       [[ax,ay],[ax,T],[bx,T],[bx,by]],
       [[ax,ay],[ax,B],[bx,B],[bx,by]],
       [[ax,ay],[L,ay],[L,by],[bx,by]],
@@ -1213,10 +1218,10 @@ function renderSVGMap() {
       [[ax,ay],[ax,B],[L,B],[L,by],[bx,by]],
     ];
     for (const off of [20, 40, 65, 95, 130, 170]) {
-      cands.push([[ax,ay],[mx+nx*off,my+ny*off],[bx,by]]);
-      cands.push([[ax,ay],[mx-nx*off,my-ny*off],[bx,by]]);
-      cands.push([[ax,ay],[m3x+nx*off,m3y+ny*off],[m3x2+nx*off,m3y2+ny*off],[bx,by]]);
-      cands.push([[ax,ay],[m3x-nx*off,m3y-ny*off],[m3x2-nx*off,m3y2-ny*off],[bx,by]]);
+      cands.push([[ax,ay],cp(mx+nx*off,my+ny*off),[bx,by]]);
+      cands.push([[ax,ay],cp(mx-nx*off,my-ny*off),[bx,by]]);
+      cands.push([[ax,ay],cp(m3x+nx*off,m3y+ny*off),cp(m3x2+nx*off,m3y2+ny*off),[bx,by]]);
+      cands.push([[ax,ay],cp(m3x-nx*off,m3y-ny*off),cp(m3x2-nx*off,m3y2-ny*off),[bx,by]]);
     }
     // Per-obstacle bypass: for each obstacle that the straight line nearly hits,
     // add tangent-bypass waypoints on both sides.
@@ -1226,12 +1231,11 @@ function renderSVGMap() {
       const t = Math.max(0.1, Math.min(0.9, ((o.x-ax)*dx + (o.y-ay)*dy) / (len*len)));
       const px = ax + t*dx, py = ay + t*dy;
       for (const side of [1, -1]) {
-        const wx = px + nx*clearance*side, wy = py + ny*clearance*side;
-        cands.push([[ax,ay],[wx,wy],[bx,by]]);
+        cands.push([[ax,ay],cp(px+nx*clearance*side, py+ny*clearance*side),[bx,by]]);
         const t1=Math.max(0.05,t-0.2), t2=Math.min(0.95,t+0.2);
         cands.push([[ax,ay],
-          [ax+t1*dx+nx*clearance*side, ay+t1*dy+ny*clearance*side],
-          [ax+t2*dx+nx*clearance*side, ay+t2*dy+ny*clearance*side],
+          cp(ax+t1*dx+nx*clearance*side, ay+t1*dy+ny*clearance*side),
+          cp(ax+t2*dx+nx*clearance*side, ay+t2*dy+ny*clearance*side),
           [bx,by]]);
       }
     }
@@ -1350,7 +1354,8 @@ function renderSVGMap() {
       // Clip access line: start at space circle edge, end at monster rect edge
       const mClip = m.isBoss ? 36 : 22;
       const p = edgePts(sn.x, sn.y, 14, mn.x, mn.y, mClip);
-      svg += `<line x1="${p.x1.toFixed(1)}" y1="${p.y1.toFixed(1)}" x2="${p.x2.toFixed(1)}" y2="${p.y2.toFixed(1)}" class="monster-access-line ${ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : ''}" />`;
+      const lineState = ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : '';
+      svg += `<line x1="${p.x1.toFixed(1)}" y1="${p.y1.toFixed(1)}" x2="${p.x2.toFixed(1)}" y2="${p.y2.toFixed(1)}" class="monster-access-line ${lineState}" />`;
     }
 
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
@@ -1400,6 +1405,11 @@ function renderSVGMap() {
     if (highlighted) cls += ' available';
 
     const r = sp.type === 'start' ? 16 : 14;
+    // Dashed red ring on nodes that adjoin a monster room
+    const adjMonsters = sp.adj.filter(nid => adv.spaces[nid]?.type === 'monster' && !state.monsterState[nid]?.defeated);
+    if (adjMonsters.length > 0) {
+      svg += `<circle cx="${n.x}" cy="${n.y}" r="${r+5}" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.65"/>`;
+    }
     svg += `<circle cx="${n.x}" cy="${n.y}" r="${r}" class="${cls}" />`;
 
     if (sp.type === 'doubles' && !vis) {
