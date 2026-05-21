@@ -990,7 +990,8 @@ function renderSVGMap() {
     if (vis)         cls += ' visited';
     if (highlighted) cls += ' available';
 
-    const hs = sp.type === 'start' ? 19 : 17;
+    const hs = sp.type === 'start' ? 28 : 28;
+
     // Opaque backing rect masks edges that pass behind this node
     svg += `<rect x="${n.x-hs-2}" y="${n.y-hs-2}" width="${(hs+2)*2}" height="${(hs+2)*2}" rx="2" fill="#1a1a1a" stroke="none"/>`;
     // data-spaceid always present so hover can find it; data-visitspace makes it clickable
