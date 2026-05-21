@@ -904,7 +904,7 @@ function renderSVGMap() {
         const cls = vA && vB ? 'visited' : (vA || vB) ? 'frontier' : '';
         const [ex1, ey1] = circleExit(nA.x, nA.y, hsA, nB.x, nB.y);
         const [ex2, ey2] = circleExit(nB.x, nB.y, hsB, nA.x, nA.y);
-        svg += `<line x1="${ex1}" y1="${ey1}" x2="${ex2}" y2="${ex2}" class="map-edge-thin ${cls}" />`;
+        svg += `<line x1="${ex1}" y1="${ey1}" x2="${ex2}" y2="${ey2}" class="map-edge-thin ${cls}" />`;
       }
     }
   }
@@ -1027,7 +1027,7 @@ function renderSVGMap() {
     { x:520, cls:'space-node visited',       label:'Visited' },
   ];
   for (const {x, cls, label} of legend) {
-    svg += `<rect x="${x-8}" y="${ly-2}" width="16" height="16" rx="2" class="${cls}"/>`;
+    svg += `<circle cx="${x}" cy="${ly+6}" r="8" class="${cls}"/>`;
     svg += `<text x="${x+13}" y="${ly+10}" class="legend-text">${label}</text>`;
   }
   // doubles mini-dice in legend
