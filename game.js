@@ -891,7 +891,7 @@ function renderSVGMap() {
     for (const [id, sp] of Object.entries(adv.spaces)) {
       if (sp.type === 'monster') continue;
       const nA = adv.nodes[id]; if (!nA) continue;
-      const hsA = sp.type === 'start' ? 16 : 14;
+      const hsA = sp.type === 'start' ? 19 : 17;
       const vA = isVisited(id);
       for (const nbrId of sp.adj) {
         const nbrSp = adv.spaces[nbrId];
@@ -900,7 +900,7 @@ function renderSVGMap() {
         if (drawnEdges.has(edgeKey)) continue;
         drawnEdges.add(edgeKey);
         const nB = adv.nodes[nbrId]; if (!nB) continue;
-        const hsB = nbrSp.type === 'start' ? 16 : 14;
+        const hsB = nbrSp.type === 'start' ? 19 : 17;
         const vB = isVisited(nbrId);
         const cls = vA && vB ? 'visited' : (vA || vB) ? 'frontier' : '';
         const [ex1, ey1] = squareExit(nA.x, nA.y, hsA, nB.x, nB.y);
@@ -922,12 +922,12 @@ function renderSVGMap() {
     const monsterRoom = adv.spaces[mid];
     const hasAccess = monsterRoom.adj.some(sid => isVisited(sid));
 
-    const mW = m.isBoss ? 90 : 60;
-    const mH = ms.defeated ? 28 : (m.isBoss ? 64 : 46);
+    const mW = m.isBoss ? 108 : 72;
+    const mH = ms.defeated ? 34 : (m.isBoss ? 76 : 55);
     for (const sid of monsterRoom.adj) {
       const sn = adv.nodes[sid];
       if (!sn) continue;
-      const hsS = adv.spaces[sid]?.type === 'start' ? 16 : 14;
+      const hsS = adv.spaces[sid]?.type === 'start' ? 19 : 17;
       const lineState = ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : '';
       const [ex1, ey1] = squareExit(sn.x, sn.y, hsS, mn.x, mn.y);
       const [ex2, ey2] = rectExit(mn.x, mn.y, mW/2, mH/2, sn.x, sn.y);
@@ -990,7 +990,7 @@ function renderSVGMap() {
     if (vis)         cls += ' visited';
     if (highlighted) cls += ' available';
 
-    const hs = sp.type === 'start' ? 16 : 14;
+    const hs = sp.type === 'start' ? 19 : 17;
     // Opaque backing rect masks edges that pass behind this node
     svg += `<rect x="${n.x-hs-2}" y="${n.y-hs-2}" width="${(hs+2)*2}" height="${(hs+2)*2}" rx="2" fill="#1a1a1a" stroke="none"/>`;
     // data-spaceid always present so hover can find it; data-visitspace makes it clickable
