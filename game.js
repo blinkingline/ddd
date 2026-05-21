@@ -934,7 +934,7 @@ function renderSVGMap() {
       const cdx = ex2-ex1, cdy = ey2-ey1;
       const clen = Math.hypot(cdx, cdy);
       if (clen >= 1) {
-        const hw = 4, px = -cdy/clen*hw, py = cdx/clen*hw;
+        const hw = 14, px = -cdy/clen*hw, py = cdx/clen*hw;
         const pts = `${(ex1+px).toFixed(1)},${(ey1+py).toFixed(1)} ${(ex1-px).toFixed(1)},${(ey1-py).toFixed(1)} ${(ex2-px).toFixed(1)},${(ey2-py).toFixed(1)} ${(ex2+px).toFixed(1)},${(ey2+py).toFixed(1)}`;
         svg += `<polygon points="${pts}" class="monster-corridor ${lineState}"/>`;
       }
