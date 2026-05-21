@@ -1,22 +1,21 @@
 'use strict';
 
 /**
- * Advanced Force-Directed Layout for Dungeons, Dice & Danger.
+ * Enhanced Force-Directed Layout for Dungeons, Dice & Danger.
  * 
- * This engine uses a multi-phase simulation to place nodes in a way that
- * resembles a hand-drawn dungeon map:
- * 1. Initial spring-repulsion simulation.
- * 2. Hard separation to prevent overlaps.
- * 3. Edge-avoidance to keep nodes away from non-adjacent paths.
- * 4. Rectangular avoidance for monster rooms.
+ * Major Improvements:
+ * 1. Simulated Annealing: Start with high energy and cool down for global stability.
+ * 2. Strict Collision: Final passes with hard radius separation.
+ * 3. Edge Repulsion: Non-adjacent nodes are pushed away from path segments.
+ * 4. Boundary Walls: Nodes are pushed away from edges of the map.
  */
 class DungeonLayout {
   constructor(options = {}) {
     this.W = options.W || 1000;
     this.H = options.H || 620;
-    this.PAD = options.PAD || 40;
+    this.PAD = options.PAD || 50;
     this.idealEdgeLength = options.idealEdgeLength || 75;
-    this.iterations = options.iterations || 800;
+    this.iterations = options.iterations || 1000;
   }
 
   calculate(spaces, fixedNodes = {}) {
@@ -28,10 +27,10 @@ class DungeonLayout {
       if (fixedNodes[id]) {
         nodes[id] = { x: fixedNodes[id].x, y: fixedNodes[id].y, fixed: true };
       } else {
-        // Random initial position within bounds, or centered
+        // Jittered central start to prevent perfect overlaps
         nodes[id] = { 
-          x: this.W / 2 + (Math.random() - 0.5) * 100, 
-          y: this.H / 2 + (Math.random() - 0.5) * 100, 
+          x: this.W / 2 + (Math.random() - 0.5) * 200, 
+          y: this.H / 2 + (Math.random() - 0.5) * 200, 
           fixed: false 
         };
       }
@@ -54,98 +53,111 @@ class DungeonLayout {
 
     const getRadius = (id) => {
       const sp = spaces[id];
-      if (sp.type === 'start') return 18;
-      if (sp.type === 'monster') return 40; // Approximate
-      return 15;
+      if (sp.type === 'start') return 20;
+      if (sp.type === 'monster') return 45; 
+      return 18;
     };
 
     const clamp = (id) => {
       const node = nodes[id];
       if (node.fixed) return;
       const r = getRadius(id);
-      node.x = Math.max(this.PAD + r, Math.min(this.W - this.PAD - r, node.x));
-      node.y = Math.max(this.PAD + r, Math.min(this.H - this.PAD - r, node.y));
+      node.x = Math.max(this.PAD, Math.min(this.W - this.PAD, node.x));
+      node.y = Math.max(this.PAD, Math.min(this.H - this.PAD, node.y));
     };
 
-    // Phase 1: Main Simulation
+    // Main Simulation Loop
     for (let t = 0; t < this.iterations; t++) {
       const fx = {}, fy = {};
       ids.forEach(id => { fx[id] = 0; fy[id] = 0; });
 
-      // 1.1 Node-Node Repulsion (Coulomb-like)
+      // Cooling factor
+      const cool = Math.max(0.01, 1 - (t / this.iterations));
+
+      // 1. Node-Node Repulsion (Stronger and longer range)
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
           const a = ids[i], b = ids[j];
           const dx = nodes[b].x - nodes[a].x;
           const dy = nodes[b].y - nodes[a].y;
-          const d2 = dx * dx + dy * dy || 0.01;
-          const d = Math.sqrt(d2);
-          const minD = getRadius(a) + getRadius(b) + 10;
+          const dist2 = dx * dx + dy * dy || 0.01;
+          const dist = Math.sqrt(dist2);
           
-          // Stronger repulsion if too close
-          const force = d < minD ? 40000 / d2 : 8000 / d2;
+          const minD = getRadius(a) + getRadius(b) + 15;
+          let force = 0;
+
+          if (dist < minD) {
+            force = 500 * (minD - dist); // Overlap push
+          } else if (dist < 300) {
+            force = 15000 / dist2; // Standard repulsion
+          }
           
-          const ux = dx / d, uy = dy / d;
+          if (force === 0) continue;
+          
+          const ux = dx / dist, uy = dy / dist;
           if (!nodes[a].fixed) { fx[a] -= force * ux; fy[a] -= force * uy; }
           if (!nodes[b].fixed) { fx[b] += force * ux; fy[b] += force * uy; }
         }
       }
 
-      // 1.2 Edge Attraction (Hooke's Law)
+      // 2. Edge Attraction (Springs)
       edgeList.forEach(([a, b]) => {
         const dx = nodes[b].x - nodes[a].x;
         const dy = nodes[b].y - nodes[a].y;
-        const d = Math.sqrt(dx * dx + dy * dy) || 0.1;
-        const force = 0.08 * (d - this.idealEdgeLength);
-        const ux = dx / d, uy = dy / d;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
+        const force = 0.15 * (dist - this.idealEdgeLength);
+        const ux = dx / dist, uy = dy / dist;
         if (!nodes[a].fixed) { fx[a] += force * ux; fy[a] += force * uy; }
         if (!nodes[b].fixed) { fx[b] -= force * ux; fy[b] -= force * uy; }
       });
 
-      // 1.3 Center Gravity (keep things from drifting)
+      // 3. Boundary Wall Push
       ids.forEach(id => {
         if (nodes[id].fixed) return;
-        const dx = this.W / 2 - nodes[id].x;
-        const dy = this.H / 2 - nodes[id].y;
-        fx[id] += dx * 0.005;
-        fy[id] += dy * 0.005;
+        const r = getRadius(id);
+        const wallForce = 15;
+        if (nodes[id].x < this.PAD + 50) fx[id] += wallForce;
+        if (nodes[id].x > this.W - this.PAD - 50) fx[id] -= wallForce;
+        if (nodes[id].y < this.PAD + 50) fy[id] += wallForce;
+        if (nodes[id].y > this.H - this.PAD - 50) fy[id] -= wallForce;
       });
 
-      // Apply forces with cooling
-      const cool = Math.max(0.05, 1 - t / this.iterations);
+      // Apply forces
       ids.forEach(id => {
         if (nodes[id].fixed) return;
-        nodes[id].x += fx[id] * cool;
-        nodes[id].y += fy[id] * cool;
+        const speed = 20 * cool;
+        nodes[id].x += Math.max(-speed, Math.min(speed, fx[id]));
+        nodes[id].y += Math.max(-speed, Math.min(speed, fy[id]));
         clamp(id);
       });
     }
 
-    // Phase 2: Push nodes off non-adjacent edges
-    for (let pass = 0; pass < 50; pass++) {
+    // Phase 2: Post-process for "Edge Avoidance" (Prevent nodes from sitting on unrelated lines)
+    for (let pass = 0; pass < 100; pass++) {
       let moved = false;
       ids.forEach(id => {
         if (nodes[id].fixed) return;
         const px = nodes[id].x, py = nodes[id].y;
-        const aset = adjOf[id];
         const r = getRadius(id);
+        const aset = adjOf[id];
 
         edgeList.forEach(([ea, eb]) => {
           if (ea === id || eb === id || aset.has(ea) || aset.has(eb)) return;
           
           const pA = nodes[ea], pB = nodes[eb];
-          const abx = pB.x - pA.x, aby = pB.y - pA.y, ab2 = abx * abx + aby * aby || 0.01;
-          const tv = Math.max(0, Math.min(1, ((px - pA.x) * abx + (py - pA.y) * aby) / ab2));
-          const ex = pA.x + tv * abx, ey = pA.y + tv * aby;
-          const ddx = px - ex, ddy = py - ey;
-          const dist = Math.sqrt(ddx * ddx + ddy * ddy) || 0.1;
+          const abx = pB.x - pA.x, aby = pB.y - pA.y;
+          const ab2 = abx * abx + aby * aby || 0.01;
+          const t = Math.max(0, Math.min(1, ((px - pA.x) * abx + (py - pA.y) * aby) / ab2));
+          const ex = pA.x + t * abx, ey = pA.y + t * aby;
+          const dist = Math.sqrt((px - ex)**2 + (py - ey)**2) || 0.1;
           
-          const clearance = r + 15;
+          const clearance = r + 25;
           if (dist < clearance) {
             moved = true;
-            const push = (clearance - dist) + 1;
-            nodes[id].x += push * (ddx / dist);
-            nodes[id].y += push * (ddy / dist);
+            const push = (clearance - dist);
+            const ux = (px - ex) / dist, uy = (py - ey) / dist;
+            nodes[id].x += ux * push;
+            nodes[id].y += uy * push;
             clamp(id);
           }
         });
@@ -153,49 +165,20 @@ class DungeonLayout {
       if (!moved) break;
     }
 
-    // Phase 3: Monster Room Avoidance (Rectangular)
-    const monsters = ids.filter(id => spaces[id].type === 'monster');
-    for (let pass = 0; pass < 40; pass++) {
-      let moved = false;
-      ids.forEach(id => {
-        if (nodes[id].fixed || spaces[id].type === 'monster') return;
-        const node = nodes[id];
-        const r = getRadius(id);
-        const aset = adjOf[id];
-
-        monsters.forEach(mid => {
-          if (aset.has(mid)) return;
-          const m = nodes[mid];
-          const hw = (spaces[mid].isBoss ? 55 : 40) + r + 10;
-          const hh = (spaces[mid].isBoss ? 45 : 30) + r + 10;
-          
-          const dx = node.x - m.x, dy = node.y - m.y;
-          const ox = hw - Math.abs(dx), oy = hh - Math.abs(dy);
-          if (ox > 0 && oy > 0) {
-            moved = true;
-            if (ox < oy) node.x += dx >= 0 ? ox : -ox;
-            else node.y += dy >= 0 ? oy : -oy;
-            clamp(id);
-          }
-        });
-      });
-      if (!moved) break;
-    }
-
-    // Phase 4: Final collision check
-    for (let pass = 0; pass < 100; pass++) {
+    // Phase 3: Final Hard Node Separation (No overlaps allowed)
+    for (let pass = 0; pass < 150; pass++) {
       let moved = false;
       for (let i = 0; i < ids.length; i++) {
         for (let j = i + 1; j < ids.length; j++) {
           const a = ids[i], b = ids[j];
           const dx = nodes[b].x - nodes[a].x;
           const dy = nodes[b].y - nodes[a].y;
-          const d = Math.sqrt(dx * dx + dy * dy) || 0.01;
-          const minD = getRadius(a) + getRadius(b) + 5;
-          if (d < minD) {
+          const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+          const minD = getRadius(a) + getRadius(b) + 8;
+          if (dist < minD) {
             moved = true;
-            const push = (minD - d) / 2 + 0.5;
-            const ux = dx / d, uy = dy / d;
+            const push = (minD - dist) / 2;
+            const ux = dx / dist, uy = dy / dist;
             if (!nodes[a].fixed) { nodes[a].x -= ux * push; nodes[a].y -= uy * push; clamp(a); }
             if (!nodes[b].fixed) { nodes[b].x += ux * push; nodes[b].y += uy * push; clamp(b); }
           }
@@ -204,16 +187,15 @@ class DungeonLayout {
       if (!moved) break;
     }
 
-    // Return rounded results
+    // Phase 4: Round and return
     const result = {};
-    Object.keys(nodes).forEach(id => {
+    ids.forEach(id => {
       result[id] = { x: Math.round(nodes[id].x), y: Math.round(nodes[id].y) };
     });
     return result;
   }
 }
 
-// Export if in Node, otherwise attach to window
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = DungeonLayout;
 } else {
