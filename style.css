@@ -613,9 +613,36 @@ body, html {
   background: rgba(0,0,0,0.2);
   border-radius: 8px;
 }
-.corridor           { fill: #333; stroke: none; opacity: 0.55; }
-.corridor.frontier  { fill: #4a5a6a; opacity: 0.85; }
-.corridor.visited   { fill: #686868; opacity: 1; }
+.map-edge-thin {
+  stroke: #444;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  transition: all 0.3s;
+}
+.map-edge-thin.frontier {
+  stroke: #666;
+}
+.map-edge-thin.visited {
+  stroke: var(--theme-color);
+  stroke-width: 4px;
+  filter: drop-shadow(0 0 2px var(--theme-color));
+}
+
+.monster-access-line-thin {
+  stroke: #6a2a2a;
+  stroke-width: 2px;
+  stroke-dasharray: 4 4;
+}
+.monster-access-line-thin.accessible {
+  stroke: #e74c3c;
+  stroke-width: 2px;
+}
+.monster-access-line-thin.defeated {
+  stroke: #333;
+  opacity: 0.3;
+}
+
+.monster-corridor            { display: none; }
 
 .space-node { fill: #2a2a2a; stroke: #555; stroke-width: 2; cursor: default; }
 .space-node.start-node   { fill: #1a4a1a; stroke: #27ae60; stroke-width: 3; }

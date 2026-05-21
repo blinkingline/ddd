@@ -113,83 +113,47 @@ function buildAnimals() {
   };
 
   const nodes = {
-    // ── Landmarks (Monster Rooms) ────────────────────────────────────────────
-    '15':{x:450, y:300}, // Boss: Beefy Bearpion (Central large room)
-    '12':{x:300, y:100}, // Monster: Purple Pup
-    '13':{x:600, y:150}, // Monster: Green Growler
-    '14':{x:200, y:250}, // Monster: Grey Hound
-    '16':{x:300, y:500}, // Monster: White Wolf
-    '17':{x:450, y:450}, // Monster: Primal Hare
-    '18':{x:650, y:450}, // Monster: Punk Hare
+    // ── Landmarks (Monsters) ────────────────────────────────────────────────
+    '15':{x:500, y:300}, // Boss: Beefy Bearpion
+    '12':{x:300, y:30},  // Monster: Purple Pup (Top Left)
+    '13':{x:650, y:30},  // Monster: Green Growler (Top Right)
+    '14':{x:100, y:300}, // Monster: Grey Hound (Far Left)
+    '16':{x:275, y:400}, // Monster: White Wolf (Bottom Leftish)
+    '17':{x:500, y:525}, // Monster: Primal Hare (Bottom Center)
+    '18':{x:750, y:525}, // Monster: Punk Hare (Bottom Right)
 
-    // ── Left Start Cluster (Column 1) ────────────────────────────────────────
-    '1': {x:150, y:100}, '2': {x:100, y:150}, '3': {x:50,  y:250},
-    '4': {x:50,  y:350}, '5': {x:50,  y:450}, '6': {x:50,  y:500},
+    // ── North-West Spoke (Purple Pup Island) ────────────────────────────────
+    '49':{x:425, y:225}, '47':{x:350, y:150}, '46':{x:275, y:75},
+    '19':{x:200, y:150}, '45':{x:300, y:150}, '44':{x:225, y:75},
+    '32':{x:425, y:50},  '40':{x:150, y:75},  '1': {x:75,  y:75}, 
+    '2': {x:75,  y:150},
 
-    // ── Right Start Cluster (Column 20ish) ───────────────────────────────────
-    '7': {x:800, y:100}, '8': {x:850, y:150}, '9': {x:900, y:200},
-    '10':{x:900, y:300}, '11':{x:850, y:350},
+    // ── North-East Spoke (Green Growler Island) ──────────────────────────────
+    '50':{x:575, y:225}, '48':{x:650, y:150}, '34':{x:575, y:150},
+    '51':{x:725, y:225}, '52':{x:800, y:150}, '53':{x:875, y:150},
+    '70':{x:725, y:150}, '20':{x:800, y:225}, '7': {x:875, y:75},
+    '8': {x:950, y:75},  '9': {x:950, y:150},
 
-    // ── Top Left Quadrant (Purple Pup & Grey Hound Area) ─────────────────────
-    '40':{x:200, y:100}, // regular, between start and monster 12
-    '44':{x:250, y:50},  // regular, next to monster 12
-    '37':{x:100, y:200}, // doubles, below start 2
-    '41':{x:150, y:250}, // regular, between start 3 and monster 14
-    '43':{x:100, y:350}, // regular, between start 4 and start 5
-    '27':{x:150, y:450}, // fist, between start 5 and start 6
-    '42':{x:100, y:450}, // regular, above start 6
-    '66':{x:150, y:350}, // regular, below monster 14
-    '19':{x:350, y:150}, // gem, next to monster 12
-    '45':{x:300, y:150}, // regular, part of monster 12 cluster
-    '46':{x:350, y:200}, // regular
-    '47':{x:400, y:200}, // regular
-    '49':{x:450, y:200}, // regular, above boss
-    '22':{x:400, y:150}, // gem
-    '38':{x:300, y:200}, // chest
-    '33':{x:250, y:250}, // doubles, near monster 14
-    '67':{x:200, y:200}, // regular, near monster 14
-    '68':{x:300, y:300}, // regular, part of monster 15 transition
-    '69':{x:350, y:350}, // regular, part of monster 15 transition
-    '32':{x:400, y:50},  // fist, top island
+    // ── West Spoke (Grey Hound Island) ──────────────────────────────────────
+    '69':{x:425, y:300}, '68':{x:350, y:300}, '33':{x:275, y:225},
+    '38':{x:200, y:225}, '22':{x:275, y:150}, '67':{x:200, y:300},
+    '41':{x:175, y:225}, '37':{x:100, y:225}, '3': {x:25,  y:225},
+    '4': {x:25,  y:300},
 
-    // ── Bottom Left Quadrant (White Wolf Area) ───────────────────────────────
-    '65':{x:200, y:400}, // regular
-    '36':{x:250, y:450}, // doubles
-    '23':{x:150, y:500}, // gem
-    '24':{x:200, y:500}, // gem
-    '31':{x:300, y:550}, // fist, bottom left corner
-    '25':{x:350, y:500}, // gem
-    '64':{x:400, y:500}, // regular
-    '63':{x:400, y:450}, // regular
-    '62':{x:350, y:450}, // regular
-    '61':{x:350, y:400}, // regular
-    '16':{x:300, y:450}, // monster 16 itself has room at 300,450 now? No, monster room node is landmark.
+    // ── East Spoke (Right Edge) ──────────────────────────────────────────────
+    '54':{x:575, y:300}, '39':{x:650, y:225}, '26':{x:725, y:300},
+    '35':{x:800, y:300}, '21':{x:875, y:300}, '10':{x:950, y:225},
+    '11':{x:950, y:300}, '28':{x:875, y:225},
 
-    // ── Top Right Quadrant (Green Growler Area) ──────────────────────────────
-    '52':{x:750, y:100}, // regular
-    '53':{x:800, y:150}, // regular
-    '70':{x:700, y:150}, // regular
-    '20':{x:750, y:200}, // gem
-    '28':{x:800, y:200}, // fist
-    '48':{x:650, y:200}, // regular
-    '50':{x:550, y:200}, // regular, above boss
-    '34':{x:600, y:250}, // doubles
-    '51':{x:700, y:250}, // regular
-    '21':{x:750, y:300}, // gem
-
-    // ── Bottom Right Quadrant (Punk Hare Area) ───────────────────────────────
-    '39':{x:600, y:350}, // chest
-    '26':{x:750, y:350}, // gem
-    '54':{x:550, y:350}, // regular, below boss
-    '55':{x:550, y:400}, // regular
-    '56':{x:600, y:400}, // regular
-    '57':{x:700, y:400}, // regular
-    '35':{x:750, y:400}, // doubles
-    '58':{x:600, y:450}, // regular
-    '59':{x:650, y:500}, // regular
-    '60':{x:700, y:500}, // regular
-    '30':{x:750, y:500}, // fist
-    '29':{x:750, y:550}, // fist
+    // ── South Spoke (White Wolf & Hare Islands) ──────────────────────────────
+    '63':{x:425, y:375}, '62':{x:350, y:375}, '64':{x:275, y:475},
+    '25':{x:200, y:475}, '31':{x:125, y:475}, '36':{x:200, y:400},
+    '65':{x:125, y:400}, '66':{x:50,  y:400},  '42':{x:50,  y:475},
+    '6': {x:25,  y:475},  '5': {x:25,  y:400},  '43':{x:100, y:400},
+    '27':{x:175, y:475}, '23':{x:100, y:550}, '24':{x:175, y:550},
+    '61':{x:525, y:450}, '60':{x:600, y:450}, '30':{x:675, y:450},
+    '59':{x:675, y:375}, '58':{x:600, y:375}, '55':{x:525, y:375},
+    '56':{x:575, y:425}, '57':{x:650, y:425}, '29':{x:725, y:425},
   };
 
   return {

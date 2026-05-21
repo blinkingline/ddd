@@ -884,13 +884,13 @@ function renderSVGMap() {
     return [cx + dx*t, cy + dy*t];
   }
 
-  // ── Space-to-space corridors (wide filled polygons, clipped at node boundaries) ──
+  // ── Space-to-space connectors (thin, professional lines) ──
   {
     const drawnEdges = new Set();
     for (const [id, sp] of Object.entries(adv.spaces)) {
       if (sp.type === 'monster') continue;
       const nA = adv.nodes[id]; if (!nA) continue;
-      const hsA = sp.type === 'start' ? 19 : 17;
+      const hsA = 28;
       const vA = isVisited(id);
       for (const nbrId of sp.adj) {
         const nbrSp = adv.spaces[nbrId];
@@ -899,21 +899,17 @@ function renderSVGMap() {
         if (drawnEdges.has(edgeKey)) continue;
         drawnEdges.add(edgeKey);
         const nB = adv.nodes[nbrId]; if (!nB) continue;
-        const hsB = nbrSp.type === 'start' ? 19 : 17;
+        const hsB = 28;
         const vB = isVisited(nbrId);
         const cls = vA && vB ? 'visited' : (vA || vB) ? 'frontier' : '';
         const [ex1, ey1] = circleExit(nA.x, nA.y, hsA, nB.x, nB.y);
         const [ex2, ey2] = circleExit(nB.x, nB.y, hsB, nA.x, nA.y);
-        const cdx = ex2-ex1, cdy = ey2-ey1;
-        const clen = Math.hypot(cdx, cdy); if (clen < 1) continue;
-        const hw = 5, px = -cdy/clen*hw, py = cdx/clen*hw;
-        const pts = `${(ex1+px).toFixed(1)},${(ey1+py).toFixed(1)} ${(ex1-px).toFixed(1)},${(ey1-py).toFixed(1)} ${(ex2-px).toFixed(1)},${(ey2-py).toFixed(1)} ${(ex2+px).toFixed(1)},${(ey2+py).toFixed(1)}`;
-        svg += `<polygon points="${pts}" class="corridor ${cls}"/>`;
+        svg += `<line x1="${ex1}" y1="${ey1}" x2="${ex2}" y2="${ex2}" class="map-edge-thin ${cls}" />`;
       }
     }
   }
 
-  // Monster rooms: access stubs from adjacent spaces + monster node rectangles
+  // Monster rooms: access lines
   for (const [mid, m] of Object.entries(adv.monsters)) {
     const mn = adv.nodes[mid];
     if (!mn) continue;
@@ -926,17 +922,11 @@ function renderSVGMap() {
     for (const sid of monsterRoom.adj) {
       const sn = adv.nodes[sid];
       if (!sn) continue;
-      const hsS = adv.spaces[sid]?.type === 'start' ? 19 : 17;
+      const hsS = 28;
       const lineState = ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : '';
       const [ex1, ey1] = circleExit(sn.x, sn.y, hsS, mn.x, mn.y);
       const [ex2, ey2] = rectExit(mn.x, mn.y, mW/2, mH/2, sn.x, sn.y);
-      const cdx = ex2-ex1, cdy = ey2-ey1;
-      const clen = Math.hypot(cdx, cdy);
-      if (clen >= 1) {
-        const hw = 14, px = -cdy/clen*hw, py = cdx/clen*hw;
-        const pts = `${(ex1+px).toFixed(1)},${(ey1+py).toFixed(1)} ${(ex1-px).toFixed(1)},${(ey1-py).toFixed(1)} ${(ex2-px).toFixed(1)},${(ey2-py).toFixed(1)} ${(ex2+px).toFixed(1)},${(ey2+py).toFixed(1)}`;
-        svg += `<polygon points="${pts}" class="monster-corridor ${lineState}"/>`;
-      }
+      svg += `<line x1="${ex1}" y1="${ey1}" x2="${ex2}" y2="${ey2}" class="monster-access-line-thin ${lineState}" />`;
     }
 
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
