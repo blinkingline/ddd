@@ -23,7 +23,7 @@ function buildAnimals() {
     {id:'8',  value:5,  type:'start',   connects:['7','53','9']},
     {id:'9',  value:8,  type:'start',   connects:['8','53','10']},
     {id:'10', value:10, type:'start',   connects:['21','9','11']},
-    {id:'11', value:11, type:'start',   connects:['10','21','12']},
+    {id:'11', value:11, type:'start',   connects:['10','21','26']},
     // ── Monster rooms ────────────────────────────────────────────────────────
     {id:'12', value:null, type:'monster', connects:[]},
     {id:'13', value:null, type:'monster', connects:[]},
