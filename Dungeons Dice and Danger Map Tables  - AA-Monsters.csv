@@ -1,0 +1,8 @@
+id,name,hp,boss,black_numbers,white_numbers,reward_first_gems,reward_subsequent_gems,death_penalty_life
+MONSTER-12,Purple Pup,4,FALSE,11,"3,4",2,1,0
+MONSTER-13,Green Growler,4,FALSE,5,"3,9",2,1,0
+MONSTER-14,Grey Hound,4,FALSE,8,"6,10",2,1,0
+MONSTER-15,Beefy Bearpion,12,TRUE,,"3,4,5,8,11",6,0,2
+MONSTER-16,White Wolf,5,FALSE,4,"5,8",2,1,0
+MONSTER-17,Primal Hare,5,FALSE,"2,12",,3,1,0
+MONSTER-18,Punk Hare,5,FALSE,"3,11",,3,1,0

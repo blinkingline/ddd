@@ -18,377 +18,7 @@ function pairSplits(w) {
   ];
 }
 
-// ─── Force-directed map layout ────────────────────────────────────────────────
-// Runs once at load; returns updated node positions for non-monster spaces.
-// Start spaces are pinned to the left/right edges; monster rooms are fixed
-// attractors. All other nodes are pushed apart (repulsion) and pulled toward
-// their graph neighbours (spring attraction) until the layout settles.
-
-function forceLayout(spaces, nodes) {
-  const W = 740, H = 485, PAD = 42;
-
-  // Radius per node type
-  const START_IDS = new Set(['1','2','3','4','5','6','7','8','9','10','11']);
-  const rOf = id => START_IDS.has(id) ? 16 : 14;
-
-  // Pinned positions for start spaces
-  const PINS = {
-    '1':{x:50,y:48},  '2':{x:50,y:116}, '3':{x:50,y:188},
-    '4':{x:50,y:258}, '5':{x:50,y:330}, '6':{x:50,y:400},
-    '7':{x:730,y:48}, '8':{x:730,y:130},'9':{x:730,y:215},
-    '10':{x:730,y:296},'11':{x:730,y:376},
-  };
-
-  // Monster room positions as fixed attractors — derived from hand-placed nodes
-  const MPOS = {};
-  for (const [id, sp] of Object.entries(spaces)) {
-    if (sp.type === 'monster') MPOS[id] = { x: nodes[id].x, y: nodes[id].y };
-  }
-
-  // Initialise mutable positions for non-monster spaces
-  const pos = {};
-  for (const [id, sp] of Object.entries(spaces)) {
-    if (sp.type === 'monster') continue;
-    pos[id] = { x: nodes[id].x, y: nodes[id].y };
-  }
-  Object.assign(pos, PINS);
-
-  const ids = Object.keys(pos);
-
-  // Precompute adjacency sets and edge list (non-redundant)
-  const adjOf = {};
-  const edgeList = [];
-  const edgeSeen = new Set();
-  for (const [id, sp] of Object.entries(spaces)) {
-    if (!pos[id]) continue;
-    adjOf[id] = new Set(sp.adj);
-    for (const nbr of sp.adj) {
-      const key = [id, nbr].sort().join('|');
-      if (!edgeSeen.has(key)) { edgeSeen.add(key); edgeList.push([id, nbr]); }
-    }
-  }
-
-  function clamp(id) {
-    if (PINS[id]) return;
-    // Inner bounds ensure non-start nodes stay ≥ 34px from left/right start nodes (x=50 and x=730)
-    // and ≥ 36px from top start nodes (y=48), preventing corner-trap overlaps.
-    pos[id].x = Math.max(84, Math.min(696, pos[id].x));
-    pos[id].y = Math.max(84, Math.min(H - PAD, pos[id].y));
-  }
-
-  // ── Phase 1: spring simulation ─────────────────────────────────────────────
-  for (let t = 0; t < 600; t++) {
-    const fx = {}, fy = {};
-    for (const id of ids) { fx[id] = 0; fy[id] = 0; }
-
-    // Node–node repulsion (boosted when overlapping)
-    for (let i = 0; i < ids.length; i++) {
-      for (let j = i + 1; j < ids.length; j++) {
-        const a = ids[i], b = ids[j];
-        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
-        const d2 = dx*dx + dy*dy || 0.01, d = Math.sqrt(d2);
-        const minD = rOf(a) + rOf(b);
-        const f = d < minD ? 28000/d2 : 5500/d2;
-        fx[a] -= f*dx/d; fy[a] -= f*dy/d;
-        fx[b] += f*dx/d; fy[b] += f*dy/d;
-      }
-    }
-
-    // Edge spring attraction (ideal length 78px)
-    for (const [id, sp] of Object.entries(spaces)) {
-      if (!pos[id]) continue;
-      for (const nbr of sp.adj) {
-        const np = pos[nbr] || MPOS[nbr];
-        if (!np) continue;
-        const dx = np.x - pos[id].x, dy = np.y - pos[id].y;
-        const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
-        const f = 0.055 * (d - 78);
-        if (!PINS[id]) { fx[id] += f*dx/d; fy[id] += f*dy/d; }
-      }
-    }
-
-    const cool = Math.max(0.06, 1 - t / 560);
-    for (const id of ids) {
-      if (PINS[id]) { pos[id] = { ...PINS[id] }; continue; }
-      pos[id].x += fx[id] * cool;
-      pos[id].y += fy[id] * cool;
-      clamp(id);
-    }
-  }
-
-  // ── Phase 2: hard node–node separation (guaranteed no overlap) ─────────────
-  for (let pass = 0; pass < 200; pass++) {
-    let any = false;
-    for (let i = 0; i < ids.length; i++) {
-      for (let j = i + 1; j < ids.length; j++) {
-        const a = ids[i], b = ids[j];
-        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
-        const d = Math.sqrt(dx*dx + dy*dy);
-        const minD = rOf(a) + rOf(b) + 2;
-        if (d < minD) {
-          any = true;
-          const push = (minD - (d || 0.01)) / 2 + 0.5;
-          // When nodes are at the same position, push along x axis to break the tie
-          const ux = d > 0.001 ? dx/d : 1, uy = d > 0.001 ? dy/d : 0;
-          if (!PINS[a]) { pos[a].x -= ux*push; pos[a].y -= uy*push; clamp(a); }
-          if (!PINS[b]) { pos[b].x += ux*push; pos[b].y += uy*push; clamp(b); }
-        }
-      }
-    }
-    if (!any) break;
-  }
-
-  // ── Phase 3: push nodes off non-adjacent edges ─────────────────────────────
-  for (let pass = 0; pass < 40; pass++) {
-    let any = false;
-    for (const id of ids) {
-      if (PINS[id]) continue;
-      const px = pos[id].x, py = pos[id].y;
-      const aset = adjOf[id];
-      for (const [ea, eb] of edgeList) {
-        if (ea === id || eb === id || aset.has(ea) || aset.has(eb)) continue;
-        const epA = pos[ea] || MPOS[ea], epB = pos[eb] || MPOS[eb];
-        if (!epA || !epB) continue;
-        // Bounding-box fast reject
-        if (px < Math.min(epA.x, epB.x) - 20 || px > Math.max(epA.x, epB.x) + 20 ||
-            py < Math.min(epA.y, epB.y) - 20 || py > Math.max(epA.y, epB.y) + 20) continue;
-        // Point-to-segment distance
-        const abx = epB.x-epA.x, aby = epB.y-epA.y, ab2 = abx*abx+aby*aby || 0.01;
-        const tv = Math.max(0, Math.min(1, ((px-epA.x)*abx + (py-epA.y)*aby) / ab2));
-        const ex = epA.x + tv*abx, ey = epA.y + tv*aby;
-        const ddx = px - ex, ddy = py - ey;
-        const dist = Math.sqrt(ddx*ddx + ddy*ddy) || 0.1;
-        const clearance = rOf(id) + 4;
-        if (dist < clearance) {
-          any = true;
-          const push = clearance - dist + 1;
-          pos[id].x += push * ddx/dist;
-          pos[id].y += push * ddy/dist;
-          clamp(id);
-        }
-      }
-    }
-    if (!any) break;
-  }
-
-  // ── Phase 3.5: push nodes clear of non-adjacent monster rects ─────────────
-  {
-    const BOSS_ID = '15';
-    const MARGIN = 8;
-    const mRects = [];
-    for (const [mid, sp] of Object.entries(spaces)) {
-      if (sp.type !== 'monster') continue;
-      const mp = MPOS[mid];
-      if (!mp) continue;
-      const hw = (mid === BOSS_ID ? 44 : 30) + MARGIN;
-      const hh = (mid === BOSS_ID ? 31 : 23) + MARGIN;
-      mRects.push({ id: mid, cx: mp.x, cy: mp.y, hw, hh });
-    }
-    for (let pass = 0; pass < 60; pass++) {
-      let any = false;
-      for (const id of ids) {
-        if (PINS[id]) continue;
-        const aset = adjOf[id];
-        for (const { id: mid, cx, cy, hw, hh } of mRects) {
-          if (aset.has(mid)) continue;
-          const dx = pos[id].x - cx, dy = pos[id].y - cy;
-          const ox = hw - Math.abs(dx), oy = hh - Math.abs(dy);
-          if (ox > 0 && oy > 0) {
-            any = true;
-            if (ox < oy) {
-              pos[id].x += dx >= 0 ? ox + 1 : -(ox + 1);
-            } else {
-              pos[id].y += dy >= 0 ? oy + 1 : -(oy + 1);
-            }
-            clamp(id);
-          }
-        }
-      }
-      if (!any) break;
-    }
-  }
-
-  // ── Phase 4: final hard separation after phase-3 moves ────────────────────
-  for (let pass = 0; pass < 100; pass++) {
-    let any = false;
-    for (let i = 0; i < ids.length; i++) {
-      for (let j = i + 1; j < ids.length; j++) {
-        const a = ids[i], b = ids[j];
-        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
-        const d = Math.sqrt(dx*dx + dy*dy);
-        const minD = rOf(a) + rOf(b) + 2;
-        if (d < minD) {
-          any = true;
-          const push = (minD - (d || 0.01)) / 2 + 0.5;
-          // When nodes are at the same position, push along x axis to break the tie
-          const ux = d > 0.001 ? dx/d : 1, uy = d > 0.001 ? dy/d : 0;
-          if (!PINS[a]) { pos[a].x -= ux*push; pos[a].y -= uy*push; clamp(a); }
-          if (!PINS[b]) { pos[b].x += ux*push; pos[b].y += uy*push; clamp(b); }
-        }
-      }
-    }
-    if (!any) break;
-  }
-
-  const result = {};
-  for (const [id, p] of Object.entries(pos)) result[id] = { x: Math.round(p.x), y: Math.round(p.y) };
-  return result;
-}
-
 // ─── Adventure Builder ────────────────────────────────────────────────────────
-
-function buildAnimals() {
-  const rawSpaces = [
-    // ── Start spaces ──────────────────────────────────────────────────────────
-    {id:'1',  value:2,  type:'start',   connects:['2','40']},
-    {id:'2',  value:9,  type:'start',   connects:['3','40']},
-    {id:'3',  value:6,  type:'start',   connects:['37','41','4']},
-    {id:'4',  value:7,  type:'start',   connects:['3','41','5']},
-    {id:'5',  value:3,  type:'start',   connects:['4','43','6']},
-    {id:'6',  value:12, type:'start',   connects:['5','42']},
-    {id:'7',  value:4,  type:'start',   connects:['8','52']},
-    {id:'8',  value:5,  type:'start',   connects:['7','53','9']},
-    {id:'9',  value:8,  type:'start',   connects:['8','53','10']},
-    {id:'10', value:10, type:'start',   connects:['21','9','11']},
-    {id:'11', value:11, type:'start',   connects:['10','21','12']},
-    // ── Monster rooms (IDs match space IDs in CSV) ────────────────────────────
-    {id:'12', value:null, type:'monster', connects:[]},
-    {id:'13', value:null, type:'monster', connects:[]},
-    {id:'14', value:null, type:'monster', connects:[]},
-    {id:'15', value:null, type:'monster', connects:[]},
-    {id:'16', value:null, type:'monster', connects:[]},
-    {id:'17', value:null, type:'monster', connects:[]},
-    {id:'18', value:null, type:'monster', connects:[]},
-    // ── Gem spaces ────────────────────────────────────────────────────────────
-    {id:'19', value:12, type:'gem',     connects:['46']},
-    {id:'20', value:2,  type:'gem',     connects:['28','70']},
-    {id:'21', value:2,  type:'gem',     connects:['51','10','11']},
-    {id:'22', value:12, type:'gem',     connects:['38','49']},
-    {id:'23', value:12, type:'gem',     connects:['27']},
-    {id:'24', value:2,  type:'gem',     connects:['23','27']},
-    {id:'25', value:2,  type:'gem',     connects:['31','64','36']},
-    {id:'26', value:12, type:'gem',     connects:['11','39','35']},
-    // ── Fist spaces ───────────────────────────────────────────────────────────
-    {id:'27', value:4,  type:'fist',    connects:['42','43','23','24']},
-    {id:'28', value:12, type:'fist',    connects:['20']},
-    {id:'29', value:2,  type:'fist',    connects:['57']},
-    {id:'30', value:8,  type:'fist',    connects:['59','60','17'], unlocks:'15'},
-    {id:'31', value:6,  type:'fist',    connects:['25']},
-    {id:'32', value:10, type:'fist',    connects:['12']},
-    // ── Doubles spaces (any doubles roll, no specific value) ──────────────────
-    {id:'33', value:null, type:'doubles', connects:['67','38','68']},
-    {id:'34', value:null, type:'doubles', connects:['50','51']},
-    {id:'35', value:null, type:'doubles', connects:['26','56']},
-    {id:'36', value:null, type:'doubles', connects:['25','65','63']},
-    {id:'37', value:null, type:'doubles', connects:['3','44','41']},
-    // ── Chest spaces ──────────────────────────────────────────────────────────
-    {id:'38', value:11, type:'chest',   connects:['67','33','22']},
-    {id:'39', value:3,  type:'chest',   connects:['26','54']},
-    // ── Regular spaces ────────────────────────────────────────────────────────
-    // unlocks: visiting this space unlocks the white number equal to this
-    // space's value for the specified monster
-    {id:'40', value:4,  type:'regular', connects:['1','2','12'],       unlocks:'12'},
-    {id:'41', value:10, type:'regular', connects:['3','4','37','14'],  unlocks:'14'},
-    {id:'42', value:5,  type:'regular', connects:['6','43','27']},
-    {id:'43', value:6,  type:'regular', connects:['5','42','27','14'], unlocks:'14'},
-    {id:'44', value:7,  type:'regular', connects:['12','37','45']},
-    {id:'45', value:3,  type:'regular', connects:['44','12','46'],     unlocks:'12'},
-    {id:'46', value:10, type:'regular', connects:['45','19','47']},
-    {id:'47', value:9,  type:'regular', connects:['46','49','48']},
-    {id:'48', value:6,  type:'regular', connects:['47','50','70']},
-    {id:'49', value:3,  type:'regular', connects:['22','47','15'],     unlocks:'15'},
-    {id:'50', value:11, type:'regular', connects:['48','34','15'],     unlocks:'15'},
-    {id:'51', value:7,  type:'regular', connects:['34','13','21']},
-    {id:'52', value:3,  type:'regular', connects:['7','13'],           unlocks:'13'},
-    {id:'53', value:9,  type:'regular', connects:['13','8','9'],       unlocks:'13'},
-    {id:'54', value:4,  type:'regular', connects:['39','55','15'],     unlocks:'15'},
-    {id:'55', value:7,  type:'regular', connects:['54','58','56']},
-    {id:'56', value:9,  type:'regular', connects:['35','55','57']},
-    {id:'57', value:8,  type:'regular', connects:['56','18','29']},
-    {id:'58', value:9,  type:'regular', connects:['55','59','18']},
-    {id:'59', value:10, type:'regular', connects:['58','18','60']},
-    {id:'60', value:6,  type:'regular', connects:['30','59','17']},
-    {id:'61', value:7,  type:'regular', connects:['62','17']},
-    {id:'62', value:8,  type:'regular', connects:['63','16','61'],     unlocks:'16'},
-    {id:'63', value:6,  type:'regular', connects:['62','16','36']},
-    {id:'64', value:5,  type:'regular', connects:['16','25'],          unlocks:'16'},
-    {id:'65', value:7,  type:'regular', connects:['66','36']},
-    {id:'66', value:5,  type:'regular', connects:['14','65']},
-    {id:'67', value:9,  type:'regular', connects:['14','38','33']},
-    {id:'68', value:10, type:'regular', connects:['33','69']},
-    {id:'69', value:5,  type:'regular', connects:['68','15'],          unlocks:'15'},
-    {id:'70', value:8,  type:'regular', connects:['20','13','48']},
-  ];
-
-  // Build spaces dict and undirected adjacency from connects lists
-  const spaces = {};
-  for (const s of rawSpaces) {
-    spaces[s.id] = { id:s.id, value:s.value, type:s.type, unlocks:s.unlocks||null, adj:[] };
-  }
-  for (const s of rawSpaces) {
-    for (const nbr of s.connects) {
-      if (!spaces[s.id].adj.includes(nbr)) spaces[s.id].adj.push(nbr);
-      if (spaces[nbr] && !spaces[nbr].adj.includes(s.id)) spaces[nbr].adj.push(s.id);
-    }
-  }
-
-  // Monster IDs match their monster-room space IDs.
-  // white numbers are unlocked when an adjacent space with that value is visited.
-  const monsters = {
-    '12': {id:'12', name:'Purple Pup',     hp:4,  isBoss:false, isArmored:false, black:[11],   white:[3,4],        gemFirst:2, gemSub:1, lifeLoss:0},
-    '13': {id:'13', name:'Green Growler',  hp:4,  isBoss:false, isArmored:false, black:[5],    white:[3,9],        gemFirst:2, gemSub:1, lifeLoss:0},
-    '14': {id:'14', name:'Grey Hound',     hp:4,  isBoss:false, isArmored:false, black:[8],    white:[6,10],       gemFirst:2, gemSub:1, lifeLoss:0},
-    '15': {id:'15', name:'Beefy Bearpion', hp:12, isBoss:true,  isArmored:false, black:[],     white:[3,4,5,8,11], gemFirst:6, gemSub:0, lifeLoss:2},
-    '16': {id:'16', name:'White Wolf',     hp:5,  isBoss:false, isArmored:false, black:[4],    white:[5,8],        gemFirst:2, gemSub:1, lifeLoss:0},
-    '17': {id:'17', name:'Primal Hare',    hp:5,  isBoss:false, isArmored:false, black:[2,12], white:[],           gemFirst:3, gemSub:1, lifeLoss:0},
-    '18': {id:'18', name:'Punk Hare',      hp:5,  isBoss:false, isArmored:false, black:[3,11], white:[],           gemFirst:3, gemSub:1, lifeLoss:0},
-  };
-
-  // Node positions — BFS layout scaled 0.85× toward boss centre (500,290)
-  // Tighter spacing turns connections into short corridors (dungeon-map look)
-  const nodes = {
-    '15':{x:500, y:290},
-    '49':{x:428, y:218}, '50':{x:564, y:222}, '54':{x:568, y:345}, '69':{x:424, y:350},
-    '22':{x:343, y:175}, '47':{x:487, y:158}, '48':{x:632, y:175}, '34':{x:653, y:269},
-    '39':{x:636, y:367}, '55':{x:530, y:413}, '68':{x:356, y:379},
-    '38':{x:258, y:163}, '46':{x:398, y:112}, '70':{x:717, y:150}, '51':{x:725, y:269},
-    '26':{x:717, y:371}, '56':{x:606, y:435}, '58':{x:487, y:443}, '33':{x:266, y:269},
-    '67':{x:203, y:146}, '45':{x:326, y:104}, '19':{x:453, y:90},  '20':{x:789, y:120},
-    '13':{x:792, y:226}, '21':{x:792, y:307}, '11':{x:802, y:375}, '35':{x:683, y:435},
-    '57':{x:598, y:481}, '59':{x:517, y:486}, '18':{x:415, y:481},
-    '14':{x:132, y:146}, '44':{x:249, y:90},  '12':{x:368, y:69},  '28':{x:836, y:90},
-    '52':{x:866, y:184}, '53':{x:883, y:273}, '10':{x:878, y:350}, '29':{x:602, y:519},
-    '60':{x:547, y:528},
-    '41':{x:132, y:226}, '43':{x:169, y:337}, '66':{x:181, y:422}, '37':{x:186, y:90},
-    '40':{x:305, y:69},  '32':{x:432, y:65},  '7': {x:891, y:133}, '8': {x:904, y:226},
-    '9': {x:900, y:311}, '30':{x:649, y:519}, '17':{x:696, y:497},
-    '3': {x:96,  y:214}, '4': {x:96,  y:316}, '5': {x:96,  y:409}, '42':{x:139, y:439},
-    '27':{x:152, y:503}, '65':{x:296, y:477}, '1': {x:215, y:65},  '2': {x:143, y:124},
-    '61':{x:768, y:507},
-    '6': {x:96,  y:477}, '23':{x:147, y:548}, '24':{x:242, y:554}, '36':{x:458, y:520},
-    '62':{x:802, y:528},
-    '25':{x:407, y:548}, '63':{x:628, y:541}, '16':{x:687, y:545},
-    '31':{x:343, y:554}, '64':{x:551, y:552},
-  };
-
-  // Use hand-placed positions directly — force simulation was making layout worse
-  const computedNodes = nodes;
-
-  return {
-    key:'animals', name:'Annoyed Animals', difficulty:'Novice', color:'#7a9b5c',
-    leftStarts:  ['1','2','3','4','5','6'],
-    rightStarts: ['7','8','9','10','11'],
-    spaces, monsters, nodes: computedNodes,
-    achievements: {
-      startsLinked: {label:'Connect both start clusters via visited path', done:false, gemFirst:1, gemSub:0, type:'path'},
-      fist5of6:     {label:'5 of 6 Fist spaces', count:0, threshold:5, total:6, done:false, gemFirst:3, gemSub:1, type:'count'},
-    },
-  };
-}
-
-const ADVENTURES = {
-  animals: buildAnimals(),
-};
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -404,6 +34,8 @@ const state = {
   monsterState: {},
   bossDamageDealt: 0,
   achievementState: {},
+  cloudAssignments: {},
+  cloudSetupSelected: null,
   round: 0,
   phase: 'roll',
   whiteDice: [0,0,0,0],
@@ -429,17 +61,19 @@ function initGame(advKey) {
     gems: 0, gold: 0, torches: 0,
     visitedSpaces: new Set(),
     rubbleProgress: {},
+    cloudAssignments: {},
+    cloudSetupSelected: null,
     bossDamageDealt: 0,
     lifeLostCount: 0,
     round: 0,
-    phase: 'roll',
+    phase: advKey === 'pyramid' ? 'cloudSetup' : 'roll',
     whiteDice: [0,0,0,0], blackDie: 0,
     selectedSplit: null, useBlackDieInPair: null,
     pairs: null, pairActions: [null, null],
     currentPair: 0,
     roundDamageDealt: false, damageExemptForfeit: false,
     pendingChest: null,
-    message: `Welcome to ${adv.name}! Roll the dice to begin.`,
+    message: advKey === 'pyramid' ? 'Puzzled Pyramid: Assign numbers to cloud spaces.' : `Welcome to ${adv.name}! Roll the dice to begin.`,
   });
   const monsterState = {};
   for (const [id, m] of Object.entries(adv.monsters)) {
@@ -448,7 +82,11 @@ function initGame(advKey) {
   state.monsterState = monsterState;
   const achievementState = {};
   for (const [id, a] of Object.entries(adv.achievements)) {
-    achievementState[id] = { done: false, count: a.count ?? 0, progress: a.progress instanceof Set ? new Set() : false };
+    achievementState[id] = { 
+      done: false, 
+      count: a.count ?? 0, 
+      progress: a.type === 'set' ? new Set() : (a.progress instanceof Set ? new Set() : false) 
+    };
   }
   state.achievementState = achievementState;
   render();
@@ -482,7 +120,9 @@ function canVisitSpace(spaceId, pair) {
   }
 
   // All other spaces need a value match
-  const num = sp.value;
+  let num = sp.value;
+  if (sp.type === 'cloud') num = state.cloudAssignments?.[spaceId];
+  
   if (num === null || num !== pair.total) return false;
 
   // Any start space is freely visitable with a matching roll — no adjacency required
@@ -490,6 +130,10 @@ function canVisitSpace(spaceId, pair) {
 
   // Fist spaces: need matching value AND doubles
   if (sp.type === 'fist' && pair.dice[0] !== pair.dice[1]) return false;
+  
+  // Gateway check for Puzzled Pyramid
+  if (sp.type === 'gateway' && !state.visitedSpaces.has('cloudGate')) return false;
+
   if (!hasAdjacentVisited(spaceId)) return false;
   return true;
 }
@@ -527,8 +171,11 @@ function rollDice() {
   state.currentPair = 0;
   state.roundDamageDealt = false;
   state.damageExemptForfeit = false;
-  state.phase = 'selectSplit';
+  state.phase = 'roll';
   state.message = `Rolled: [${state.whiteDice.join(', ')}] + black [${state.blackDie}]. Choose how to split the white dice.`;
+  
+  // Transition to selection
+  state.phase = 'selectSplit';
   render();
 }
 
@@ -614,6 +261,25 @@ function triggerSpaceEffects(spaceId) {
     checkAchievement('fist5of6', spaceId);
   }
 
+  // Cloud Gateway unlock
+  if (sp.type === 'cloud' && state.cloudAssignments?.[spaceId] === 11) {
+    state.visitedSpaces.add('cloudGate');
+    state.message += ' — Cloud Gateway unlocked!';
+  }
+
+  // Achievement: All Cloud spaces
+  if (sp.type === 'cloud') checkAchievement('allClouds', spaceId);
+
+  // Worm spaces: deal 3 damage to boss
+  if (sp.type === 'worm') {
+    const bossId = Object.keys(adv.monsters).find(mid => adv.monsters[mid].isBoss);
+    if (bossId) dealDamage(bossId, 3);
+    checkAchievement('allWorms', spaceId);
+  }
+
+  // Rubble achievement
+  if (sp.type === 'rubble') checkAchievement('rubble6of7', spaceId);
+
   // Annoyed Animals: check cluster link achievement
   if (state.adventure === 'animals') checkStartsConnected();
 }
@@ -669,6 +335,10 @@ function defeatMonster(monsterId) {
   if (m.lifeLoss > 0) loseLife(m.lifeLoss);
   if (m.isBoss) state.bossDamageDealt = ms.totalDamage;
   state.message += ` ${m.name} defeated! +${m.gemFirst} gem(s).`;
+  
+  // Cultists achievement
+  if (state.adventure === 'cultists') checkAchievement('bothMancers', monsterId);
+  
   checkGameEnd();
 }
 
@@ -816,6 +486,13 @@ function checkAchievement(key, triggerId) {
       state.gems += ach.gemFirst;
       state.message += ` Achievement: ${ach.label}! +${ach.gemFirst} gem(s).`;
     }
+  } else if (ach.type === 'set') {
+    as.progress.add(triggerId);
+    if (as.progress.size >= ach.threshold) {
+      as.done = true;
+      state.gems += ach.gemFirst;
+      state.message += ` Achievement: ${ach.label}! +${ach.gemFirst} gem(s).`;
+    }
   }
 }
 
@@ -866,14 +543,16 @@ function render() {
 }
 
 function renderSetup() {
+  const btns = Object.values(ADVENTURES).map(adv => `
+    <button class="realm-btn" data-realm="${adv.key}" style="border-color:${adv.color}">
+      <div class="realm-title">${adv.name}</div>
+      <div style="font-size:0.85em;color:#aaa;margin-top:6px">${adv.difficulty}</div>
+    </button>`).join('');
   return `<div class="realm-selector">
     <h1>&#x1F3B2; Dungeons, Dice &amp; Danger &#x1F3B2;</h1>
     <p>Solo adventure</p>
-    <div class="realm-grid" style="max-width:280px;margin:0 auto">
-      <button class="realm-btn" data-realm="animals" style="border-color:#7a9b5c">
-        <div class="realm-title">Annoyed Animals</div>
-        <div style="font-size:0.85em;color:#aaa;margin-top:6px">Novice</div>
-      </button>
+    <div class="realm-grid" style="max-width:600px;margin:0 auto">
+      ${btns}
     </div>
   </div>`;
 }
@@ -982,6 +661,7 @@ function spaceOptionLabel(spaceId) {
 }
 
 function renderPhaseUI() {
+  if (state.phase === 'cloudSetup') return renderCloudSetup();
   if (state.phase === 'chest') return renderChestModal();
   if (state.phase === 'torch')         return renderTorchUI();
 
@@ -1100,6 +780,46 @@ function renderPhaseUI() {
   return bar;
 }
 
+
+function renderCloudSetup() {
+  const adv = getAdv();
+  const pool = remainingCloudPool();
+  const assigned = state.cloudAssignments || {};
+  const cloudSpaces = Object.values(adv.spaces).filter(s => s.type === 'cloud');
+  
+  const cloudItems = cloudSpaces.map(sp => {
+    const num = assigned[sp.id];
+    const isSelected = state.cloudSetupSelected === sp.id;
+    const label = num !== undefined ? `${num}` : '?';
+    return `<div class="cloud-setup-item ${isSelected ? 'selected' : ''} ${num !== undefined ? 'assigned' : ''}" data-action="cloudSetupSelect" data-id="${sp.id}">
+      <div class="cloud-label">${label}</div>
+      ${num !== undefined ? `<button class="cloud-clear" data-action="cloudSetupClear" data-id="${sp.id}">×</button>` : ''}
+    </div>`;
+  }).join('');
+
+  const poolBtns = pool.map(n => 
+    `<button class="cloud-num-btn ${state.cloudSetupSelected ? '' : 'disabled'}" data-action="cloudSetupAssign" data-num="${n}">${n}</button>`
+  ).join('');
+
+  const canStart = pool.length === 0;
+
+  return `<div class="cloud-setup-modal">
+    <h3>Assign Numbers to Cloud Spaces</h3>
+    <p>Puzzled Pyramid: Assign each number in the pool to a cloud space.</p>
+    <div class="cloud-setup-grid">${cloudItems}</div>
+    <div class="cloud-pool">
+      <span>Pool: </span>${poolBtns}
+    </div>
+    ${canStart ? `<button class="roll-btn" data-action="startAdventure" style="margin-top:20px">Start Adventure</button>` : ''}
+  </div>`;
+}
+
+function remainingCloudPool() {
+  const adv = getAdv();
+  const pool = [3, 4, 5, 6, 8, 9, 10, 11];
+  const used = new Set(Object.values(state.cloudAssignments || {}));
+  return pool.filter(n => !used.has(n));
+}
 
 function renderChestModal() {
   return `<div class="chest-modal">
@@ -1262,6 +982,10 @@ function renderSVGMap() {
     else if (sp.type === 'gem')     cls += ' gem-node';
     else if (sp.type === 'chest')   cls += ' chest-node';
     else if (sp.type === 'doubles') cls += ' doubles-node';
+    else if (sp.type === 'rubble')  cls += ' rubble-node';
+    else if (sp.type === 'cloud')   cls += ' cloud-node';
+    else if (sp.type === 'claw')    cls += ' claw-node';
+    else if (sp.type === 'worm')    cls += ' worm-node';
 
     if (vis)         cls += ' visited';
     if (highlighted) cls += ' available';
@@ -1283,9 +1007,20 @@ function renderSVGMap() {
       // Fist icon (top) + "n+n" required pair value (bottom)
       svg += `<text x="${n.x}" y="${n.y-1}" class="fist-icon-lbl">✊</text>`;
       svg += `<text x="${n.x}" y="${n.y+9}" class="fist-val-lbl">${sp.value/2}+${sp.value/2}</text>`;
+    } else if (sp.type === 'worm' && !vis) {
+      svg += `<text x="${n.x}" y="${n.y+4}" class="fist-icon-lbl">🐛</text>`;
+    } else if (sp.type === 'claw' && !vis) {
+      svg += `<text x="${n.x}" y="${n.y+4}" class="fist-icon-lbl">🦴</text>`;
+    } else if (sp.type === 'rubble' && !vis) {
+      const prog = state.rubbleProgress[id] ?? 0;
+      if (prog === 1) {
+        svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">½</text>`;
+      } else {
+        svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${sp.value}</text>`;
+      }
     } else {
       let lbl = sp.value !== null ? String(sp.value) : '';
-      if (vis && sp.type !== 'start' && sp.type !== 'fist') lbl = '✓';
+      if (vis && sp.type !== 'start' && sp.type !== 'fist' && sp.type !== 'worm' && sp.type !== 'claw') lbl = '✓';
       svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${lbl}</text>`;
     }
   }
@@ -1294,12 +1029,13 @@ function renderSVGMap() {
   const ly = 582;
   svg += `<line x1="0" y1="${ly-4}" x2="${W}" y2="${ly-4}" stroke="#333" stroke-width="1"/>`;
   const legend = [
-    { x:14,  cls:'space-node start-node',   label:'Start (any roll)' },
-    { x:135, cls:'space-node gem-node',      label:'Gem' },
-    { x:205, cls:'space-node chest-node',    label:'Chest (gold)' },
-    { x:310, cls:'space-node fist-node',     label:'Fist ✊ (n+n pair)' },
-    { x:465, cls:'space-node doubles-node',  label:'Any Doubles' },
-    { x:590, cls:'space-node visited',       label:'Visited' },
+    { x:14,  cls:'space-node start-node',   label:'Start' },
+    { x:100, cls:'space-node gem-node',      label:'Gem' },
+    { x:160, cls:'space-node chest-node',    label:'Chest' },
+    { x:240, cls:'space-node fist-node',     label:'Fist ✊' },
+    { x:330, cls:'space-node doubles-node',  label:'Doubles' },
+    { x:430, cls:'space-node rubble-node',   label:'Rubble' },
+    { x:520, cls:'space-node visited',       label:'Visited' },
   ];
   for (const {x, cls, label} of legend) {
     svg += `<rect x="${x-8}" y="${ly-2}" width="16" height="16" rx="2" class="${cls}"/>`;
@@ -1395,6 +1131,23 @@ function attachListeners() {
     if (t.dataset.chest)       { chooseChestReward(t.dataset.chest); return; }
 
     const action = t.dataset.action;
+    if (action === 'cloudSetupSelect') { state.cloudSetupSelected = t.dataset.id; render(); return; }
+    if (action === 'cloudSetupClear') { delete state.cloudAssignments[t.dataset.id]; render(); return; }
+    if (action === 'cloudSetupAssign') {
+      if (!state.cloudSetupSelected) return;
+      if (!state.cloudAssignments) state.cloudAssignments = {};
+      state.cloudAssignments[state.cloudSetupSelected] = +t.dataset.num;
+      state.cloudSetupSelected = null;
+      render();
+      return;
+    }
+    if (action === 'startAdventure') {
+      state.phase = 'roll';
+      state.message = 'Adventure begins! Roll the dice.';
+      render();
+      return;
+    }
+
     if      (action === 'roll')         rollDice();
     else if (action === 'confirmPairs') confirmPairs();
     else if (action === 'undoSplit')    { state.phase = 'selectSplit'; state.selectedSplit = null; state.pairs = []; state.useBlackDieInPair = null; render(); }

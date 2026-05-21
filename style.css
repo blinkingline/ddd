@@ -667,7 +667,7 @@ body, html {
 .monster-corridor.defeated   { fill: #2a2a2a; opacity: 0.2; }
 
 /* ── Cloud Setup ── */
-.cloud-setup {
+.cloud-setup-modal {
   background: rgba(0,0,0,0.3);
   border: 2px solid #8e9cc0;
   border-radius: 8px;
@@ -675,14 +675,14 @@ body, html {
   margin-bottom: 16px;
   text-align: center;
 }
-.cloud-grid {
+.cloud-setup-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
   margin-bottom: 16px;
 }
-.cloud-space {
+.cloud-setup-item {
   width: 56px; height: 56px;
   border: 2px solid #8e9cc0;
   border-radius: 50%;
@@ -691,9 +691,10 @@ body, html {
   cursor: pointer; background: #1a2a3a;
   position: relative; transition: all 0.2s;
 }
-.cloud-space:hover { border-color: #fff; }
-.cloud-space.selected { border-color: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
-.cloud-space.assigned { border-color: #f1c40f; color: #f1c40f; }
+.cloud-setup-item:hover { border-color: #fff; }
+.cloud-setup-item.selected { border-color: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
+.cloud-setup-item.assigned { border-color: #f1c40f; color: #f1c40f; }
+.cloud-label { pointer-events: none; }
 .cloud-clear {
   position: absolute; top: -6px; right: -6px;
   background: #e74c3c; border: none; color: white;
