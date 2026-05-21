@@ -866,13 +866,12 @@ function renderSVGMap() {
   const W = 1000, H = 620;
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="dungeon-map">`;
 
-  // Clip a line to the edge of a square node (half-side hs)
-  function squareExit(cx, cy, hs, toX, toY) {
+  // Clip a line to the edge of a circle node (radius r)
+  function circleExit(cx, cy, r, toX, toY) {
     const dx = toX - cx, dy = toY - cy;
-    const adx = Math.abs(dx), ady = Math.abs(dy);
-    if (adx < 0.001 && ady < 0.001) return [cx, cy];
-    const t = adx >= ady ? hs / adx : hs / ady;
-    return [cx + dx*t, cy + dy*t];
+    const d = Math.hypot(dx, dy);
+    if (d < 0.001) return [cx, cy];
+    return [cx + (dx * r) / d, cy + (dy * r) / d];
   }
 
   // Clip a line to the edge of a monster rectangle (half-widths hw, hh)
@@ -903,8 +902,8 @@ function renderSVGMap() {
         const hsB = nbrSp.type === 'start' ? 19 : 17;
         const vB = isVisited(nbrId);
         const cls = vA && vB ? 'visited' : (vA || vB) ? 'frontier' : '';
-        const [ex1, ey1] = squareExit(nA.x, nA.y, hsA, nB.x, nB.y);
-        const [ex2, ey2] = squareExit(nB.x, nB.y, hsB, nA.x, nA.y);
+        const [ex1, ey1] = circleExit(nA.x, nA.y, hsA, nB.x, nB.y);
+        const [ex2, ey2] = circleExit(nB.x, nB.y, hsB, nA.x, nA.y);
         const cdx = ex2-ex1, cdy = ey2-ey1;
         const clen = Math.hypot(cdx, cdy); if (clen < 1) continue;
         const hw = 5, px = -cdy/clen*hw, py = cdx/clen*hw;
@@ -929,7 +928,7 @@ function renderSVGMap() {
       if (!sn) continue;
       const hsS = adv.spaces[sid]?.type === 'start' ? 19 : 17;
       const lineState = ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : '';
-      const [ex1, ey1] = squareExit(sn.x, sn.y, hsS, mn.x, mn.y);
+      const [ex1, ey1] = circleExit(sn.x, sn.y, hsS, mn.x, mn.y);
       const [ex2, ey2] = rectExit(mn.x, mn.y, mW/2, mH/2, sn.x, sn.y);
       const cdx = ex2-ex1, cdy = ey2-ey1;
       const clen = Math.hypot(cdx, cdy);
@@ -991,12 +990,11 @@ function renderSVGMap() {
     if (highlighted) cls += ' available';
 
     const hs = sp.type === 'start' ? 28 : 28;
-
-    // Opaque backing rect masks edges that pass behind this node
-    svg += `<rect x="${n.x-hs-2}" y="${n.y-hs-2}" width="${(hs+2)*2}" height="${(hs+2)*2}" rx="2" fill="#1a1a1a" stroke="none"/>`;
+    // Opaque backing circle masks edges that pass behind this node
+    svg += `<circle cx="${n.x}" cy="${n.y}" r="${hs+2}" fill="#1a1a1a" stroke="none"/>`;
     // data-spaceid always present so hover can find it; data-visitspace makes it clickable
     const clickAttr = highlighted || state.phase === 'torch' ? ` data-visitspace="${id}"` : '';
-    svg += `<rect x="${n.x-hs}" y="${n.y-hs}" width="${hs*2}" height="${hs*2}" rx="2" class="${cls}" data-spaceid="${id}"${clickAttr}/>`;
+    svg += `<circle cx="${n.x}" cy="${n.y}" r="${hs}" class="${cls}" data-spaceid="${id}"${clickAttr}/>`;
 
     if (sp.type === 'doubles' && !vis) {
       // Two mini dice icons — no number (any doubles works)
