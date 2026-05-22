@@ -863,7 +863,7 @@ function renderSVGMap() {
     : new Set();
   const highlightSet = new Set([...validSet, ...torchSet]);
 
-  const W = 1000, H = 620;
+  const W = 1000, H = 720;
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="dungeon-map">`;
 
   // Clip a line to the edge of a circle node (radius r)
@@ -1015,7 +1015,7 @@ function renderSVGMap() {
   }
 
   // ── Legend ────────────────────────────────────────────────────────────────
-  const ly = 582;
+  const ly = H - 38;
   svg += `<line x1="0" y1="${ly-4}" x2="${W}" y2="${ly-4}" stroke="#333" stroke-width="1"/>`;
   const legend = [
     { x:14,  cls:'space-node start-node',   label:'Start' },
