@@ -660,16 +660,18 @@ function renderGame() {
   return `<div class="game-container">
     ${renderHeader()}
     <div class="game-grid">
-      <div class="left-panel">
-        ${renderStatusCard()}
-        ${renderMonsterPanel()}
-        ${renderAchievements()}
+      <div class="phase-panel">
+        ${renderPhaseUI()}
       </div>
       <div class="center-panel">
-        ${renderPhaseUI()}
         ${renderLayoutToolbar()}
         <div class="board-container${layoutMode ? ' layout-mode' : ''}">${renderSVGMap()}</div>
         <div class="message-box">${state.message}</div>
+      </div>
+      <div class="status-panel">
+        ${renderStatusCard()}
+        ${renderMonsterPanel()}
+        ${renderAchievements()}
       </div>
     </div>
   </div>`;

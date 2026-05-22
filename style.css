@@ -70,7 +70,7 @@ body, html {
 
 /* ── Game Container ── */
 .game-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -109,8 +109,9 @@ body, html {
 /* ── Layout ── */
 .game-grid {
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 20px;
+  grid-template-columns: 220px 1fr 220px;
+  gap: 16px;
+  align-items: start;
 }
 
 /* ── Status Panel ── */
@@ -219,16 +220,17 @@ body, html {
 /* ── Dice Section ── */
 .dice-section {
   text-align: center;
-  padding: 40px;
+  padding: 16px 12px;
   background: rgba(0,0,0,0.3);
   border-radius: 8px;
   border: 2px dashed var(--theme-color);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .roll-btn {
-  font-size: 1.5em;
-  padding: 20px 40px;
+  font-size: 1.2em;
+  padding: 14px 20px;
+  width: 100%;
   background: var(--theme-color);
   color: white;
   border: none;
@@ -494,9 +496,8 @@ body, html {
 /* ── Split Selector ── */
 .split-grid {
   display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 8px;
 }
 .split-option {
@@ -812,8 +813,8 @@ body, html {
   background: rgba(0,0,0,0.3);
   border: 2px dashed var(--theme-color);
   border-radius: 8px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
+  padding: 12px;
+  margin-bottom: 12px;
 }
 .pair-header {
   display: flex;
@@ -827,8 +828,8 @@ body, html {
 .options-area { margin-bottom: 14px; }
 .options-grid {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
 }
 .option-btn {
   padding: 10px 16px;
@@ -935,10 +936,12 @@ body, html {
 }
 
 /* ── Responsive ── */
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .game-grid {
     grid-template-columns: 1fr;
   }
+  .phase-panel { order: -1; }
+  .status-panel { order: 1; }
 
   .realm-selector h1 {
     font-size: 2em;
