@@ -345,7 +345,11 @@ function defeatMonster(monsterId) {
 function forfeitPair() {
   const pair = state.pairs[state.currentPair];
   pair.forfeited = true;
-  if (state.roundDamageDealt) state.damageExemptForfeit = true;
+  const isFree = state.currentPair === 1 && state.roundDamageDealt;
+  if (isFree) state.damageExemptForfeit = true;
+  state.message = isFree
+    ? 'Pair 2 forfeited — free (damage already dealt this round).'
+    : `Pair ${state.currentPair + 1} forfeited — −1 life.`;
   advancePair();
 }
 
@@ -767,7 +771,7 @@ function renderPhaseUI() {
             ? `<div class="options-grid">${spaceButtons}${monsterButtons}</div>`
             : `<p class="no-options">No valid moves — must forfeit.</p>`}
         </div>
-        <button class="action-btn skip" data-forfeit="${i}">Forfeit (−1 life)</button>
+        <button class="action-btn skip" data-forfeit="${i}">${i === 1 && state.roundDamageDealt ? 'Forfeit Pair 2 (free — damage dealt)' : 'Forfeit (−1 life)'}</button>
       </div>`;
     }).join('');
 
