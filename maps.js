@@ -134,9 +134,9 @@ function buildAnimals() {
     '44':{x:305, y:170},
     '12':{x:260, y:90},   // Purple Pup
     '32':{x:185, y:60},   // fist → Purple Pup
-    '40':{x:185, y:155},
+    '40':{x:175, y:135},
     '22':{x:305, y:245},  // gem, bridges NW arm to W arm via 38
-    '38':{x:210, y:195},  // chest, connects 67, 33, 22
+    '38':{x:230, y:200},  // chest, connects 67, 33, 22
 
     // ── LEFT STARTS (upper cluster) ────────────────────────────────────────
     '1': {x:95,  y:100},
