@@ -837,8 +837,8 @@ function renderPhaseUI() {
       </div>
       ${blackBtns}
       <div style="display:flex;gap:10px;margin-top:12px;justify-content:center">
-        <button class="roll-btn" data-action="undoSplit" style="font-size:1em;padding:10px 20px;background:rgba(255,255,255,0.05);border-color:#666;color:#aaa">← Back</button>
-        <button class="roll-btn" data-action="confirmPairs" style="font-size:1.1em;padding:12px 28px">Confirm Pairs →</button>
+        <button class="roll-btn" data-action="undoSplit" style="font-size:1em;padding:10px 20px;width:auto;background:rgba(255,255,255,0.05);border-color:#666;color:#aaa">← Back</button>
+        <button class="roll-btn" data-action="confirmPairs" style="font-size:1.1em;padding:12px 28px;width:auto">Confirm Pairs →</button>
       </div>
     </div>`;
   }
