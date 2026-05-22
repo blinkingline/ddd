@@ -836,9 +836,9 @@ function renderPhaseUI() {
         <div class="pair-box ${state.useBlackDieInPair === 1 ? 'black-used' : ''} ${p1ok ? 'pair-valid' : 'pair-invalid'}">Pair 2: [${p[1].dice.join('+')}] = <b>${p[1].total}</b></div>
       </div>
       ${blackBtns}
-      <div style="display:flex;gap:10px;margin-top:12px;justify-content:center">
-        <button class="roll-btn" data-action="undoSplit" style="font-size:1em;padding:10px 20px;width:auto;background:rgba(255,255,255,0.05);border-color:#666;color:#aaa">← Back</button>
-        <button class="roll-btn" data-action="confirmPairs" style="font-size:1.1em;padding:12px 28px;width:auto">Confirm Pairs →</button>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        <button class="roll-btn" data-action="confirmPairs" style="font-size:1.1em;padding:12px">Confirm Pairs →</button>
+        <button class="roll-btn" data-action="undoSplit" style="font-size:0.9em;padding:8px;background:rgba(255,255,255,0.05);border-color:#666;color:#aaa">← Back</button>
       </div>
     </div>`;
   }
