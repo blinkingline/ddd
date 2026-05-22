@@ -40,9 +40,9 @@ function initLayoutDrag() {
   }
 
   svg.addEventListener('pointerdown', e => {
-    const circle = e.target.closest('circle[data-spaceid]');
-    if (!circle) return;
-    dragging = circle.dataset.spaceid;
+    const node = e.target.closest('[data-spaceid]');
+    if (!node) return;
+    dragging = node.dataset.spaceid;
     startSVG = toSVGCoords(e);
     const adv = getAdv();
     const cur = layoutOverrides[dragging] || adv.nodes[dragging];
@@ -57,9 +57,16 @@ function initLayoutDrag() {
     const dx = pt.x - startSVG.x, dy = pt.y - startSVG.y;
     const newX = Math.round(startPos.x + dx);
     const newY = Math.round(startPos.y + dy);
-    // Move the circle live without full re-render
-    const circle = svg.querySelector(`circle[data-spaceid="${dragging}"]`);
-    if (circle) { circle.setAttribute('cx', newX); circle.setAttribute('cy', newY); }
+    const el = svg.querySelector(`[data-spaceid="${dragging}"]`);
+    if (!el) return;
+    if (el.tagName === 'circle') {
+      el.setAttribute('cx', newX);
+      el.setAttribute('cy', newY);
+    } else {
+      const hw = +el.dataset.hw, hh = +el.dataset.hh;
+      el.setAttribute('x', newX - hw);
+      el.setAttribute('y', newY - hh);
+    }
   });
 
   svg.addEventListener('pointerup', e => {
@@ -1030,7 +1037,7 @@ function renderSVGMap() {
 
     const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
     const pct = ms.health / m.hp;
-    svg += `<rect x="${mn.x-mW/2}" y="${mn.y-mH/2}" width="${mW}" height="${mH}" rx="4" class="${cls}" />`;
+    svg += `<rect x="${mn.x-mW/2}" y="${mn.y-mH/2}" width="${mW}" height="${mH}" rx="4" class="${cls}" data-spaceid="${mid}" data-hw="${mW/2}" data-hh="${mH/2}"/>`;
     if (!ms.defeated) {
       const barY = mn.y + mH/2 - 9;
       svg += `<rect x="${mn.x-mW/2+2}" y="${barY}" width="${Math.round((mW-4)*pct)}" height="5" class="monster-hp-fill" />`;
