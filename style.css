@@ -613,6 +613,12 @@ body, html {
   background: rgba(0,0,0,0.2);
   border-radius: 8px;
 }
+.layout-mode .dungeon-map circle[data-spaceid] {
+  cursor: grab;
+}
+.layout-mode .dungeon-map circle[data-spaceid]:active {
+  cursor: grabbing;
+}
 .map-edge-thin {
   stroke: #444;
   stroke-width: 2px;

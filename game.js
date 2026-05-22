@@ -1,5 +1,80 @@
 'use strict';
 
+// ─── Layout Editor ────────────────────────────────────────────────────────────
+let layoutMode = false;
+let layoutOverrides = {};  // { spaceId: {x, y} }
+
+function toggleLayoutMode() {
+  layoutMode = !layoutMode;
+  render();
+}
+
+function copyLayoutCoords() {
+  const adv = getAdv();
+  const lines = [];
+  for (const [id, node] of Object.entries(adv.nodes)) {
+    const pos = layoutOverrides[id] || node;
+    const x = Math.round(pos.x), y = Math.round(pos.y);
+    const comment = adv.monsters[id] ? `  // ${adv.monsters[id].name}` : '';
+    lines.push(`    '${id}':{x:${x}, y:${y}},${comment}`);
+  }
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('layout-copy-btn');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy Coords'; }, 2000); }
+  });
+}
+
+function initLayoutDrag() {
+  if (!layoutMode) return;
+  const svg = document.querySelector('.dungeon-map');
+  if (!svg) return;
+
+  let dragging = null;
+  let startSVG = null;
+  let startPos = null;
+
+  function toSVGCoords(evt) {
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  svg.addEventListener('pointerdown', e => {
+    const circle = e.target.closest('circle[data-spaceid]');
+    if (!circle) return;
+    dragging = circle.dataset.spaceid;
+    startSVG = toSVGCoords(e);
+    const adv = getAdv();
+    const cur = layoutOverrides[dragging] || adv.nodes[dragging];
+    startPos = { x: cur.x, y: cur.y };
+    svg.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  svg.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const pt = toSVGCoords(e);
+    const dx = pt.x - startSVG.x, dy = pt.y - startSVG.y;
+    const newX = Math.round(startPos.x + dx);
+    const newY = Math.round(startPos.y + dy);
+    // Move the circle live without full re-render
+    const circle = svg.querySelector(`circle[data-spaceid="${dragging}"]`);
+    if (circle) { circle.setAttribute('cx', newX); circle.setAttribute('cy', newY); }
+  });
+
+  svg.addEventListener('pointerup', e => {
+    if (!dragging) return;
+    const pt = toSVGCoords(e);
+    const dx = pt.x - startSVG.x, dy = pt.y - startSVG.y;
+    layoutOverrides[dragging] = {
+      x: Math.round(startPos.x + dx),
+      y: Math.round(startPos.y + dy),
+    };
+    dragging = null;
+    render();  // full re-render snaps lines to new position
+  });
+}
+
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 const d6 = () => Math.floor(Math.random() * 6) + 1;
@@ -561,6 +636,19 @@ function renderSetup() {
   </div>`;
 }
 
+function renderLayoutToolbar() {
+  if (!layoutMode) {
+    return `<div style="text-align:right;margin-bottom:4px">
+      <button data-action="toggleLayout" style="font-size:11px;padding:3px 8px;opacity:0.5">Layout Mode</button>
+    </div>`;
+  }
+  return `<div style="text-align:right;margin-bottom:4px;display:flex;gap:6px;justify-content:flex-end;align-items:center">
+    <span style="font-size:11px;color:#f1c40f">Layout Mode ON — drag nodes to reposition</span>
+    <button id="layout-copy-btn" data-action="copyLayout" style="font-size:11px;padding:3px 8px">Copy Coords</button>
+    <button data-action="toggleLayout" style="font-size:11px;padding:3px 8px">Done</button>
+  </div>`;
+}
+
 function renderGame() {
   return `<div class="game-container">
     ${renderHeader()}
@@ -572,7 +660,8 @@ function renderGame() {
       </div>
       <div class="center-panel">
         ${renderPhaseUI()}
-        <div class="board-container">${renderSVGMap()}</div>
+        ${renderLayoutToolbar()}
+        <div class="board-container${layoutMode ? ' layout-mode' : ''}">${renderSVGMap()}</div>
         <div class="message-box">${state.message}</div>
       </div>
     </div>
@@ -888,12 +977,18 @@ function renderSVGMap() {
     return [cx + dx*t, cy + dy*t];
   }
 
+  function nodePos(id) {
+    const base = adv.nodes[id];
+    if (!base) return null;
+    return layoutOverrides[id] ? { ...base, ...layoutOverrides[id] } : base;
+  }
+
   // ── Space-to-space connectors (thin, professional lines) ──
   {
     const drawnEdges = new Set();
     for (const [id, sp] of Object.entries(adv.spaces)) {
       if (sp.type === 'monster') continue;
-      const nA = adv.nodes[id]; if (!nA) continue;
+      const nA = nodePos(id); if (!nA) continue;
       const hsA = 28;
       const vA = isVisited(id);
       for (const nbrId of sp.adj) {
@@ -902,7 +997,7 @@ function renderSVGMap() {
         const edgeKey = [id, nbrId].sort().join('|');
         if (drawnEdges.has(edgeKey)) continue;
         drawnEdges.add(edgeKey);
-        const nB = adv.nodes[nbrId]; if (!nB) continue;
+        const nB = nodePos(nbrId); if (!nB) continue;
         const hsB = 28;
         const vB = isVisited(nbrId);
         const cls = vA && vB ? 'visited' : (vA || vB) ? 'frontier' : '';
@@ -915,7 +1010,7 @@ function renderSVGMap() {
 
   // Monster rooms: access lines
   for (const [mid, m] of Object.entries(adv.monsters)) {
-    const mn = adv.nodes[mid];
+    const mn = nodePos(mid);
     if (!mn) continue;
     const ms = state.monsterState[mid];
     const monsterRoom = adv.spaces[mid];
@@ -924,7 +1019,7 @@ function renderSVGMap() {
     const mW = m.isBoss ? 108 : 72;
     const mH = ms.defeated ? 34 : (m.isBoss ? 76 : 55);
     for (const sid of monsterRoom.adj) {
-      const sn = adv.nodes[sid];
+      const sn = nodePos(sid);
       if (!sn) continue;
       const hsS = 28;
       const lineState = ms.defeated ? 'defeated' : isVisited(sid) ? 'accessible' : '';
@@ -964,7 +1059,7 @@ function renderSVGMap() {
   // Space nodes (read-only — monster rooms skipped, rendered above)
   for (const [id, sp] of Object.entries(adv.spaces)) {
     if (sp.type === 'monster') continue;
-    const n = adv.nodes[id];
+    const n = nodePos(id);
     if (!n) continue;
     const vis = isVisited(id);
     const highlighted = highlightSet.has(id);
@@ -1148,8 +1243,11 @@ function attachListeners() {
     else if (action === 'useTorch')     useTorch();
     else if (action === 'cancelTorch')  { state.phase = 'assignPair'; render(); }
     else if (action === 'quit')         { state.screen = 'setup'; render(); }
+    else if (action === 'toggleLayout') toggleLayoutMode();
+    else if (action === 'copyLayout')   copyLayoutCoords();
   };
   app.addEventListener('click', _appClickHandler);
+  initLayoutDrag();
 
   // Hovering an option button highlights the corresponding space on the map
   app.addEventListener('mouseover', e => {
