@@ -203,7 +203,7 @@ function canVisitSpace(spaceId, pair) {
 
   // All other spaces need a value match
   let num = sp.value;
-  if (sp.type === 'cloud') num = state.cloudAssignments?.[spaceId];
+  if (sp.type === 'cloud') num = state.cloudAssignments?.[spaceId] ?? sp.value;
   
   if (num === null || num !== pair.total) return false;
 
@@ -327,6 +327,7 @@ function triggerSpaceEffects(spaceId) {
   const sp = adv.spaces[spaceId];
 
   if (sp.type === 'gem')   state.gems++;
+  if (sp.type === 'gold')  state.gold++;
   if (sp.type === 'chest') state.pendingChest = spaceId;
 
   // Unlock a specific white number for a monster (the unlocked number = this space's value)
@@ -343,14 +344,29 @@ function triggerSpaceEffects(spaceId) {
     checkAchievement('fist5of6', spaceId);
   }
 
-  // Cloud Gateway unlock
-  if (sp.type === 'cloud' && state.cloudAssignments?.[spaceId] === 11) {
-    state.visitedSpaces.add('cloudGate');
-    state.message += ' — Cloud Gateway unlocked!';
+  // Claw spaces (Defiant Dinosaurs): unlock matching white numbers for all monsters that have them
+  if (sp.type === 'claw') {
+    for (const [mid, m] of Object.entries(adv.monsters)) {
+      if (m.white.includes(sp.value)) {
+        state.monsterState[mid].unlockedWhite.add(sp.value);
+      }
+    }
+    checkAchievement('claw6of7', spaceId);
   }
 
-  // Achievement: All Cloud spaces
-  if (sp.type === 'cloud') checkAchievement('allClouds', spaceId);
+  // Cloud spaces
+  if (sp.type === 'cloud') {
+    const effectiveVal = state.cloudAssignments?.[spaceId] ?? sp.value;
+    if (effectiveVal === 11) {
+      // Auto-visit the blank gateway cloud (space 37) that connects to the far side
+      state.visitedSpaces.add('37');
+      state.message += ' — Cloud Gateway unlocked!';
+    }
+    // Count achievement only for player-assignable pool clouds
+    if (adv.cloudPoolIds && adv.cloudPoolIds.includes(spaceId)) {
+      checkAchievement('allClouds', spaceId);
+    }
+  }
 
   // Worm spaces: deal 3 damage to boss
   if (sp.type === 'worm') {
@@ -418,8 +434,16 @@ function defeatMonster(monsterId) {
   if (m.isBoss) state.bossDamageDealt = ms.totalDamage;
   state.message += ` ${m.name} defeated! +${m.gemFirst} gem(s).`;
   
-  // Cultists achievement
-  if (state.adventure === 'cultists') checkAchievement('bothMancers', monsterId);
+  // Cultists: only track the two Mancers for the achievement
+  if (state.adventure === 'cultists' && ['2','4'].includes(monsterId)) {
+    checkAchievement('bothMancers', monsterId);
+  }
+
+  // Dinosaurs: track armored dinosaur defeats
+  if (state.adventure === 'dinosaurs') {
+    const m = adv.monsters[monsterId];
+    if (m && m.isArmored) checkAchievement('armoredDinos', monsterId);
+  }
   
   checkGameEnd();
 }
@@ -747,15 +771,21 @@ function spaceOptionLabel(spaceId) {
   const adv = getAdv();
   const sp = adv.spaces[spaceId];
   if (sp.type === 'start') {
-    const cluster = adv.leftStarts.includes(spaceId) ? 'Left' : 'Right';
-    return `${cluster} start: ${sp.value}`;
+    const leftSet  = new Set(adv.leftStarts  || []);
+    const rightSet = new Set(adv.rightStarts || []);
+    const cluster  = leftSet.has(spaceId) ? 'Left' : rightSet.has(spaceId) ? 'Right' : '';
+    return `${cluster ? cluster + ' start' : 'Start'}: ${sp.value}`;
   }
   if (sp.type === 'doubles') return '✊✊ Doubles space (any matching pair)';
   const info = {
-    fist:    { icon: '✊', name: 'Fist',  note: 'damages all monsters' },
-    gem:     { icon: '💎', name: 'Gem',   note: '+1 gem' },
-    chest:   { icon: '📦', name: 'Chest', note: 'choose a reward' },
-    regular: { icon: '',   name: '',      note: '' },
+    fist:    { icon: '✊', name: 'Fist',   note: 'damages all monsters' },
+    gem:     { icon: '💎', name: 'Gem',    note: '+1 gem' },
+    gold:    { icon: '🪙', name: 'Gold',   note: '+1 gold' },
+    chest:   { icon: '📦', name: 'Chest',  note: 'choose a reward' },
+    rubble:  { icon: '🪨', name: 'Rubble', note: 'needs 2 visits' },
+    claw:    { icon: '🦴', name: 'Claw',   note: 'unlocks monster numbers' },
+    cloud:   { icon: '☁',  name: 'Cloud',  note: '' },
+    regular: { icon: '',   name: '',       note: '' },
   };
   const t = info[sp.type] || { icon: '', name: sp.type, note: '' };
   const parts = [t.icon, t.name || '', sp.value, t.note ? `— ${t.note}` : ''].filter(x => x !== '' && x !== null && x !== undefined);
@@ -887,7 +917,9 @@ function renderCloudSetup() {
   const adv = getAdv();
   const pool = remainingCloudPool();
   const assigned = state.cloudAssignments || {};
-  const cloudSpaces = Object.values(adv.spaces).filter(s => s.type === 'cloud');
+  const cloudSpaces = adv.cloudPoolIds
+    ? adv.cloudPoolIds.map(id => adv.spaces[id])
+    : Object.values(adv.spaces).filter(s => s.type === 'cloud' && s.value === null && s.id !== '37');
   
   const cloudItems = cloudSpaces.map(sp => {
     const num = assigned[sp.id];
@@ -1074,9 +1106,10 @@ function renderSVGMap() {
     const highlighted = highlightSet.has(id);
 
     let cls = 'space-node';
-    if (sp.type === 'start')    cls += ' start-node';
+    if (sp.type === 'start')         cls += ' start-node';
     else if (sp.type === 'fist')    cls += ' fist-node';
     else if (sp.type === 'gem')     cls += ' gem-node';
+    else if (sp.type === 'gold')    cls += ' gold-node';
     else if (sp.type === 'chest')   cls += ' chest-node';
     else if (sp.type === 'doubles') cls += ' doubles-node';
     else if (sp.type === 'rubble')  cls += ' rubble-node';
