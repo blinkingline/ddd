@@ -414,9 +414,9 @@ function buildPyramid() {
     // Monster rooms (68–74)
     {id:'68', value:null, type:'monster', connects:[]},
     {id:'69', value:null, type:'monster', connects:[]},
-    {id:'70', value:null, type:'monster', connects:[]},
-    {id:'71', value:null, type:'monster', connects:[]},
-    {id:'72', value:null, type:'monster', connects:[]},
+    {id:'70', value:6,    type:'worm',    connects:[]},  // Sandy's Gut
+    {id:'71', value:8,    type:'worm',    connects:[]},  // Sandy's Spine-y
+    {id:'72', value:5,    type:'worm',    connects:[]},  // Sandy's Tail
     {id:'73', value:null, type:'monster', connects:[]},
     {id:'74', value:null, type:'monster', connects:[]},
     // Space 75
@@ -428,9 +428,6 @@ function buildPyramid() {
   const monsters = {
     '68': {id:'68', name:'Sphinx',          hp:5,  isBoss:false, isArmored:false, black:[5],    white:[10],  gemFirst:3, gemSub:1, lifeLoss:0},
     '69': {id:'69', name:'Ankh',            hp:5,  isBoss:false, isArmored:false, black:[2,5,9],white:[],    gemFirst:3, gemSub:1, lifeLoss:0},
-    '70': {id:'70', name:"Sandy's Gut",     hp:4,  isBoss:false, isArmored:false, black:[6],    white:[],    gemFirst:2, gemSub:1, lifeLoss:0},
-    '71': {id:'71', name:"Sandy's Spine-y", hp:4,  isBoss:false, isArmored:false, black:[8],    white:[],    gemFirst:2, gemSub:1, lifeLoss:0},
-    '72': {id:'72', name:"Sandy's Tail",    hp:4,  isBoss:false, isArmored:false, black:[5],    white:[],    gemFirst:2, gemSub:1, lifeLoss:0},
     '73': {id:'73', name:'Horus',           hp:5,  isBoss:false, isArmored:false, black:[9],    white:[4],   gemFirst:3, gemSub:1, lifeLoss:0},
     '74': {id:'74', name:'Sandy',           hp:21, isBoss:true,  isArmored:false, black:[3,11], white:[4,10],gemFirst:9, gemSub:0, lifeLoss:2},
   };
@@ -450,6 +447,7 @@ function buildPyramid() {
     cloudPoolIds: ['28','29','30','31','32','33','34','35'],
     achievements: {
       allClouds: {label:'All 8 Cloud spaces', count:0, threshold:8, total:8, done:false, gemFirst:3, gemSub:1, type:'count'},
+      allWorms:  {label:'All 3 Worm spaces',  count:0, threshold:3, total:3, done:false, gemFirst:3, gemSub:1, type:'count'},
     },
   };
 }
