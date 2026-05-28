@@ -279,7 +279,7 @@ function buildCultists() {
     {id:'45', value:2,   type:'regular', connects:['14','15','4'], unlocks:'4'},
     {id:'46', value:9,   type:'regular', connects:['20','36','31','47']},
     {id:'47', value:4,   type:'regular', connects:['46','23','24','48']},
-    {id:'48', value:10,  type:'regular', connects:['7','50','55','54'],  unlocks:'7'},
+    {id:'48', value:10,  type:'regular', connects:['47','31','7'],        unlocks:'7'},
     {id:'49', value:8,   type:'regular', connects:['7','54','51'],       unlocks:'7'},
     {id:'50', value:5,   type:'regular', connects:['7','49','54','51'],  unlocks:'7'},
     {id:'51', value:4,   type:'regular', connects:['50','32']},
