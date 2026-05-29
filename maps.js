@@ -400,8 +400,8 @@ function buildCultists() {
 function buildPyramid() {
   const rawSpaces = [
     // Start spaces (four entry clusters)
-    {id:'1',  value:5,  type:'start',   connects:['2','37']},
-    {id:'2',  value:3,  type:'start',   connects:['3','1','37','38']},
+    {id:'1',  value:5,  type:'start',   connects:['2','39']},
+    {id:'2',  value:3,  type:'start',   connects:['3','1','39','38']},
     {id:'3',  value:11, type:'start',   connects:['2','38','4']},
     {id:'4',  value:8,  type:'start',   connects:['3','38']},
     {id:'5',  value:7,  type:'start',   connects:['41','6']},
