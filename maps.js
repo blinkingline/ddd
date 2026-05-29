@@ -614,7 +614,7 @@ function buildDinosaurs() {
     {id:'65', value:2,  type:'start',   connects:['66','53']},
     {id:'66', value:12, type:'start',   connects:['65','53']},
     // Chest spaces
-    {id:'19', value:3,  type:'chest',   connects:['36','35']},
+    {id:'19', value:11, type:'chest',   connects:['36','35']},
     {id:'20', value:3,  type:'chest',   connects:['22','58']},
     // Gem spaces
     {id:'21', value:2,  type:'gem',     connects:['69','11']},
