@@ -368,12 +368,6 @@ function triggerSpaceEffects(spaceId) {
     }
   }
 
-  // Worm spaces: deal 3 damage to boss
-  if (sp.type === 'worm') {
-    const bossId = Object.keys(adv.monsters).find(mid => adv.monsters[mid].isBoss);
-    if (bossId) dealDamage(bossId, 3);
-    checkAchievement('allWorms', spaceId);
-  }
 
   // Rubble achievement
   if (sp.type === 'rubble') checkAchievement('rubble6of7', spaceId);
@@ -444,7 +438,17 @@ function defeatMonster(monsterId) {
     const m = adv.monsters[monsterId];
     if (m && m.isArmored) checkAchievement('armoredDinos', monsterId);
   }
-  
+
+  // Worm parts: on defeat, deal 3 damage to Sandy and track achievement
+  if (m.isWorm) {
+    const bossId = Object.keys(adv.monsters).find(mid => adv.monsters[mid].isBoss);
+    if (bossId) {
+      dealDamage(bossId, 3);
+      state.message += ` Sandy takes 3 damage!`;
+    }
+    checkAchievement('allWorms', monsterId);
+  }
+
   checkGameEnd();
 }
 
@@ -1035,6 +1039,7 @@ function renderSVGMap() {
       for (const nbrId of sp.adj) {
         const nbrSp = adv.spaces[nbrId];
         if (!nbrSp || nbrSp.type === 'monster') continue;
+        if (sp.type === 'cloud' && nbrSp.type === 'cloud') continue;
         const edgeKey = [id, nbrId].sort().join('|');
         if (drawnEdges.has(edgeKey)) continue;
         drawnEdges.add(edgeKey);
@@ -1104,6 +1109,7 @@ function renderSVGMap() {
     if (!n) continue;
     const vis = isVisited(id);
     const highlighted = highlightSet.has(id);
+    const cloudSetupHighlight = state.phase === 'cloudSetup' && state.cloudSetupSelected === id;
 
     let cls = 'space-node';
     if (sp.type === 'start')         cls += ' start-node';
@@ -1117,8 +1123,9 @@ function renderSVGMap() {
     else if (sp.type === 'claw')    cls += ' claw-node';
     else if (sp.type === 'worm')    cls += ' worm-node';
 
-    if (vis)         cls += ' visited';
-    if (highlighted) cls += ' available';
+    if (vis)                cls += ' visited';
+    if (highlighted)        cls += ' available';
+    if (cloudSetupHighlight) cls += ' cloud-setup-selected';
 
     const hs = sp.type === 'start' ? 28 : 28;
     // Opaque backing circle masks edges that pass behind this node
@@ -1153,6 +1160,11 @@ function renderSVGMap() {
       if (vis && sp.type !== 'start' && sp.type !== 'fist' && sp.type !== 'worm' && sp.type !== 'claw') lbl = '✓';
       svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${lbl}</text>`;
     }
+  }
+
+  // ── Cloud rule note (PP only) ─────────────────────────────────────────────
+  if (adv.cloudPoolIds) {
+    svg += `<text x="500" y="${H - 52}" class="cloud-rule-note" text-anchor="middle">☁ Cloud spaces are all connected to each other — move freely between any two cloud spaces</text>`;
   }
 
   // ── Legend ────────────────────────────────────────────────────────────────

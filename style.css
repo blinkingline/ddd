@@ -658,9 +658,10 @@ body, html {
 .space-node.gem-node     { fill: #0a2a3a; stroke: #3498db; stroke-width: 2; }
 .space-node.chest-node   { fill: #2a1800; stroke: #f39c12; stroke-width: 2; }
 .space-node.rubble-node  { fill: #2a1a0a; stroke: #795548; stroke-width: 2; }
-.space-node.cloud-node   { fill: #1a2a3a; stroke: #8e9cc0; stroke-width: 2; }
-.space-node.claw-node    { fill: #3a1a1a; stroke: #c0392b; stroke-width: 2; }
-.space-node.worm-node    { fill: #1a2a1a; stroke: #27ae60; stroke-width: 2; }
+.space-node.cloud-node            { fill: #1a2a3a; stroke: #8e9cc0; stroke-width: 2; }
+.space-node.cloud-setup-selected  { stroke: #fff; stroke-width: 3; filter: drop-shadow(0 0 6px #fff); }
+.space-node.claw-node             { fill: #3a1a1a; stroke: #c0392b; stroke-width: 2; }
+.cloud-rule-note { fill: #8e9cc0; font-size: 11px; font-style: italic; }
 
 .space-node.visited      { opacity: 0.5; }
 .space-node.partial      { opacity: 0.8; stroke-dasharray: 4 2; }
