@@ -1081,9 +1081,11 @@ function renderSVGMap() {
       svg += `<line x1="${ex1}" y1="${ey1}" x2="${ex2}" y2="${ey2}" class="monster-access-line-thin ${lineState}" />`;
     }
 
-    const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : hasAccess ? 'monster-node accessible' : 'monster-node';
+    const isAttackable = activePair && canAttackMonster(mid, activePair);
+    const cls = ms.defeated ? 'monster-node defeated' : m.isBoss ? 'monster-node boss' : isAttackable ? 'monster-node attackable' : hasAccess ? 'monster-node accessible' : 'monster-node';
     const pct = ms.health / m.hp;
-    svg += `<rect x="${mn.x-mW/2}" y="${mn.y-mH/2}" width="${mW}" height="${mH}" rx="4" class="${cls}" data-spaceid="${mid}" data-hw="${mW/2}" data-hh="${mH/2}"/>`;
+    const attackAttr = isAttackable ? ` data-attack="${mid}"` : '';
+    svg += `<rect x="${mn.x-mW/2}" y="${mn.y-mH/2}" width="${mW}" height="${mH}" rx="4" class="${cls}" data-spaceid="${mid}" data-hw="${mW/2}" data-hh="${mH/2}"${attackAttr}/>`;
     if (!ms.defeated) {
       const barY = mn.y + mH/2 - 9;
       svg += `<rect x="${mn.x-mW/2+2}" y="${barY}" width="${Math.round((mW-4)*pct)}" height="5" class="monster-hp-fill" />`;

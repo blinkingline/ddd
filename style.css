@@ -688,7 +688,8 @@ body, html {
 
 .monster-node         { fill: #2a0a0a; stroke: #e74c3c; stroke-width: 2; }
 .monster-node.boss    { fill: #3a0a0a; stroke: #c0392b; stroke-width: 3; }
-.monster-node.accessible { stroke: #e74c3c; stroke-width: 2; fill: #3a0a0a; }
+.monster-node.accessible  { stroke: #e74c3c; stroke-width: 2; fill: #3a0a0a; }
+.monster-node.attackable  { stroke: #ff6b6b; stroke-width: 3; fill: #4a0a0a; cursor: pointer; filter: drop-shadow(0 0 4px #e74c3c); }
 .monster-node.defeated { fill: #1a1a1a; stroke: #555; opacity: 0.5; }
 .monster-hp-fill      { fill: #e74c3c; }
 .monster-label        { text-anchor: middle; font-size: 8px; fill: #eee; pointer-events: none; font-family: 'Courier New', monospace; }
