@@ -426,7 +426,7 @@ function buildPyramid() {
     {id:'22', value:3,  type:'gold',    connects:['30','52']},
     {id:'23', value:11, type:'gold',    connects:['53','15']},
     {id:'24', value:9,  type:'gold',    connects:['58','32','71']},
-    {id:'25', value:10, type:'gold',    connects:['37','64']},
+    {id:'25', value:10, type:'gold',    connects:['39','64']},
     // Chest spaces
     {id:'26', value:11, type:'chest',   connects:['19','47','34']},
     {id:'27', value:3,  type:'chest',   connects:['73','63','35']},
