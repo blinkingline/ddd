@@ -1154,7 +1154,7 @@ function renderSVGMap() {
     } else if (sp.type === 'worm' && !vis) {
       svg += `<text x="${n.x}" y="${n.y+4}" class="fist-icon-lbl">🐛</text>`;
     } else if (sp.type === 'claw' && !vis) {
-      svg += `<text x="${n.x}" y="${n.y+4}" class="fist-icon-lbl">🦴</text>`;
+      svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${sp.value}</text>`;
     } else if (sp.type === 'rubble' && !vis) {
       const prog = state.rubbleProgress[id] ?? 0;
       if (prog === 1) {
