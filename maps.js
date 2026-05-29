@@ -620,10 +620,10 @@ function buildDinosaurs() {
     {id:'21', value:2,  type:'gem',     connects:['69','11']},
     {id:'22', value:12, type:'gem',     connects:['73','58','20']},
     {id:'23', value:2,  type:'gem',     connects:['1','2']},
-    {id:'24', value:12, type:'gem',     connects:['38','68']},
+    {id:'24', value:12, type:'gem',     connects:['38','67']},
     {id:'25', value:12, type:'gem',     connects:['26']},
     {id:'26', value:2,  type:'gem',     connects:['25','5']},
-    {id:'27', value:2,  type:'gem',     connects:['68','41','42']},
+    {id:'27', value:2,  type:'gem',     connects:['67','41','42']},
     // Gold spaces
     {id:'28', value:11, type:'gold',    connects:['61','6','60','17']},
     {id:'29', value:3,  type:'gold',    connects:['2','3']},
