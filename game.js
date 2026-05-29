@@ -216,6 +216,13 @@ function canVisitSpace(spaceId, pair) {
   // Gateway check for Puzzled Pyramid
   if (sp.type === 'gateway' && !state.visitedSpaces.has('cloudGate')) return false;
 
+  // Cloud spaces are all mutually reachable — any visited cloud satisfies adjacency
+  if (sp.type === 'cloud') {
+    const cloudReachable = hasAdjacentVisited(spaceId) ||
+      Object.values(adv.spaces).some(s => s.type === 'cloud' && isVisited(s.id));
+    return cloudReachable;
+  }
+
   if (!hasAdjacentVisited(spaceId)) return false;
   return true;
 }
