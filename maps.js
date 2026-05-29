@@ -438,13 +438,13 @@ function buildPyramid() {
     {id:'32', value:null, type:'cloud', connects:['60','58','24','71']},
     {id:'33', value:null, type:'cloud', connects:['61','59','58']},
     {id:'34', value:null, type:'cloud', connects:['66','67','19','26']},
-    {id:'35', value:null, type:'cloud', connects:['63','65','27','62']},
+    {id:'35', value:null, type:'cloud', connects:[]},
     // Space 36: fixed cloud (always 11); visiting it auto-unlocks the blank gateway (37)
-    {id:'36', value:11,  type:'cloud',  connects:['37']},
+    {id:'36', value:11,  type:'cloud',  connects:['37','64']},
     // Space 37: blank gateway cloud — no number, auto-visited when cloud-11 is reached
     {id:'37', value:null, type:'cloud', connects:['56']},
     // Regular and doubles spaces
-    {id:'38', value:6,   type:'regular', connects:['2','3','4','73']},
+    {id:'38', value:6,   type:'regular', connects:['2','3','4']},
     {id:'39', value:null,type:'doubles', connects:['1','2','25','75']},
     {id:'40', value:6,   type:'regular', connects:['28','7']},
     {id:'41', value:9,   type:'regular', connects:['5','6','9','20']},

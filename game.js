@@ -1155,6 +1155,11 @@ function renderSVGMap() {
       } else {
         svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${sp.value}</text>`;
       }
+    } else if (sp.type === 'cloud') {
+      const assignedNum = state.cloudAssignments?.[id];
+      const effectiveVal = assignedNum !== undefined ? assignedNum : sp.value;
+      const lbl = vis ? '✓' : (effectiveVal !== null && effectiveVal !== undefined ? String(effectiveVal) : '');
+      svg += `<text x="${n.x}" y="${n.y+4}" class="space-label">${lbl}</text>`;
     } else {
       let lbl = sp.value !== null ? String(sp.value) : '';
       if (vis && sp.type !== 'start' && sp.type !== 'fist' && sp.type !== 'worm' && sp.type !== 'claw') lbl = '✓';
