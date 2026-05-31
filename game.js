@@ -755,7 +755,7 @@ function renderMonsterPanel() {
     ).join(', ');
     const whiteLabel = m.white.length ? ` | White: ${whiteNums}` : '';
     return `<div class="monster-item${m.isBoss ? ' boss-monster' : ''}${attackableNow ? ' attackable-now' : ''}">
-      <div class="monster-name">${m.isBoss ? '&#x1F451; ' : ''}${m.name}${!hasAccess ? ' <span class="no-access">(no access)</span>' : ''}</div>
+      <div class="monster-name">${m.isBoss ? '&#x1F451; ' : ''}${m.isArmored ? '🛡 ' : ''}${m.name}${!hasAccess ? ' <span class="no-access">(no access)</span>' : ''}</div>
       <div class="monster-nums">Black: ${m.black.join(', ')}${whiteLabel}</div>
       <div class="health-bar-visual"><div class="health-fill" style="width:${pct}%"></div></div>
       <div style="font-size:0.78em;color:#aaa">${ms.health}/${m.hp} HP</div>
@@ -901,7 +901,7 @@ function renderPhaseUI() {
       const monsterButtons = attackable.map(mid => {
         const m = adv.monsters[mid];
         const ms = state.monsterState[mid];
-        return `<button class="option-btn monster-btn" data-attack="${mid}" data-pairidx="${i}">&#x2694; ${m.name} (${ms.health}/${m.hp} HP)</button>`;
+        return `<button class="option-btn monster-btn" data-attack="${mid}" data-pairidx="${i}">&#x2694; ${m.isArmored ? '🛡 ' : ''}${m.name} (${ms.health}/${m.hp} HP)</button>`;
       }).join('');
       return `<div class="pair-panel">
         <div class="pair-panel-header">Pair ${i+1}: [${pair.dice.join('+')}] = <b>${pair.total}</b></div>
@@ -1091,7 +1091,7 @@ function renderSVGMap() {
       svg += `<rect x="${mn.x-mW/2+2}" y="${barY}" width="${Math.round((mW-4)*pct)}" height="5" class="monster-hp-fill" />`;
       svg += `<rect x="${mn.x-mW/2+2}" y="${barY}" width="${mW-4}" height="5" fill="none" stroke="#555" stroke-width="1" />`;
       // Name line
-      svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 11}" class="monster-label">${m.name.split(' ')[0]}</text>`;
+      svg += `<text x="${mn.x}" y="${mn.y - mH/2 + 11}" class="monster-label">${m.isArmored ? '🛡 ' : ''}${m.name.split(' ')[0]}</text>`;
       // Attack numbers: available (white) | locked (grey)
       const available = [...m.black, ...m.white.filter(n => ms.unlockedWhite.has(n))];
       const locked = m.white.filter(n => !ms.unlockedWhite.has(n));
